@@ -1,0 +1,174 @@
+:root {
+  --fg: #1a1a1a;
+  --bg: #ffffff;
+  --muted: #6b7280;
+  --rule: #e5e7eb;
+  --accent: #1e40af;
+  --neg: #b91c1c;
+  --pos: #166534;
+  --total-bg: #f3f4f6;
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--fg);
+  background: var(--bg);
+  margin: 0;
+}
+header {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  position: sticky; top: 0; background: var(--bg); z-index: 10;
+}
+.brand { font-weight: 600; color: var(--accent); text-decoration: none; }
+nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+nav a { color: var(--fg); text-decoration: none; }
+nav a:hover { color: var(--accent); }
+
+main {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+h1 { font-size: 1.8rem; margin-bottom: 0.25em; }
+h2 { font-size: 1.3rem; margin-top: 2.25rem; }
+.lede { color: var(--muted); font-size: 1.05rem; margin-bottom: 1.5rem; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem; margin: 1.5rem 0;
+}
+.kpi {
+  border: 1px solid var(--rule); border-radius: 6px; padding: 1rem;
+}
+.kpi h3 { font-size: 0.85rem; color: var(--muted);
+          font-weight: 500; margin: 0 0 0.5rem; text-transform: uppercase;
+          letter-spacing: 0.04em; }
+.kpi .value { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi .value.neg { color: var(--neg); }
+.kpi .value.pos { color: var(--pos); }
+.kpi .period { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0.5rem 0 1.25rem;
+}
+.scroll-x table.financial {
+  min-width: 100%;
+  width: max-content;
+}
+
+table.financial {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92rem;
+}
+table.financial th, table.financial td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+table.financial th.num, table.financial td.num { text-align: right; }
+table.financial th { background: var(--total-bg); font-weight: 600; }
+table.financial tr.total { background: var(--total-bg); font-weight: 600; }
+table.financial tr.total td { border-top: 1px solid var(--rule); }
+table.financial tr.depth-1 td.label { padding-left: 1.5rem; }
+table.financial tr.depth-2 td.label { padding-left: 2.5rem; }
+table.financial tr.depth-3 td.label { padding-left: 3.5rem; }
+table.financial tr.depth-4 td.label { padding-left: 4.5rem; }
+table.financial td.neg { color: var(--neg); }
+
+.year-grid { list-style: none; padding: 0;
+             display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+             gap: 0.5rem; }
+.year-grid a {
+  display: block; padding: 0.4rem 0.6rem; border: 1px solid var(--rule);
+  border-radius: 4px; text-align: center; text-decoration: none;
+  color: var(--fg);
+}
+.year-grid a:hover { border-color: var(--accent); color: var(--accent); }
+
+.chart {
+  width: 100%; height: 360px;
+  margin: 1.5rem 0 0;
+}
+.chart-block {
+  margin: 1.5rem 0;
+}
+.chart-block .chart { margin: 0; }
+.chart-notes {
+  font-size: 0.85rem;
+  border-left: 3px solid var(--rule);
+  padding: 0.4rem 0.75rem;
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+.chart-notes summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  color: var(--fg);
+}
+.chart-notes ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+.chart-notes li { margin: 0.15rem 0; }
+
+aside.coverage {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--accent);
+  background: #f9fafb;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin: 1rem 0 1.5rem;
+  font-size: 0.9rem;
+}
+aside.coverage strong { display: block; margin-bottom: 0.4rem; }
+aside.coverage ul { margin: 0; padding-left: 1.25rem; }
+aside.coverage li { margin: 0.2rem 0; }
+.muted-tight {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Regime-transition column markers in tables. */
+table.financial th.transition,
+table.financial td.transition {
+  border-left: 2px solid #b91c1c80;
+}
+table.financial th.transition {
+  cursor: help;
+  background: #fee2e2cc;
+}
+table.financial .tmark {
+  color: #b91c1c;
+  font-weight: 700;
+  margin-left: 0.1em;
+}
+table.financial th.cov,
+table.financial td.cov {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 2rem 1.5rem;
+  color: var(--muted); font-size: 0.85rem;
+  margin-top: 4rem;
+}
+footer a { color: inherit; }
+
+table.status td a { color: var(--accent); text-decoration: none; }
+table.status td a:hover { text-decoration: underline; }
+
+code { font-size: 0.85em; }

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ doc_id }}</h1>
+<p class="lede">
+  {{ kind_label }} — exercício {{ year }}{% if period != "fy" %} ({{ period | upper }}){% endif %}.
+  <a href="{{ url }}" target="_blank" rel="noopener">Abrir PDF original →</a>
+</p>
+
+<p class="muted">
+  {{ rows | length }} linhas extraídas e mapeadas para o esquema canônico.
+  Cada linha referencia a página do PDF de origem.
+</p>
+
+<div class="scroll-x">
+<table class="financial">
+  <thead>
+    <tr>
+      <th>Demonstração</th>
+      <th>Linha (canônica)</th>
+      <th>Rótulo no PDF</th>
+      <th>Período</th>
+      <th class="num">Valor</th>
+      <th>Página</th>
+      <th>Nota</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.statement | upper }}</td>
+      <td><code>{{ row.line_id }}</code></td>
+      <td>{{ row.label_raw }}</td>
+      <td>{{ row.period_label }}</td>
+      <td class="num {% if row.value < 0 %}neg{% endif %}">{{ row.value | format_num }}</td>
+      <td><a href="{{ url }}#page={{ row.page }}">p.{{ row.page }}</a></td>
+      <td>{{ row.note_ref or "" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

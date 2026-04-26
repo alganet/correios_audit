@@ -1,0 +1,16 @@
+line_id,period_year,value
+dre.receita_liquida,2024,18908.247
+dre.receita_liquida,2023,19243.353
+dre.cpv,2024,-15916.486
+dre.cpv,2023,-15200.258
+dre.lucro_bruto,2024,2991.761
+dre.lucro_bruto,2023,4043.095
+dre.resultado_liquido,2024,-2591.248
+dre.resultado_liquido,2023,-633.509
+bp.ativo.total,2024,16402.532
+bp.ativo.total,2023,18472.085
+bp.passivo.total,2024,16402.532
+bp.patrimonio_liquido.capital,2024,3403.458
+bp.passivo.nao_circulante.beneficios_pos_emprego,2024,9268.734
+bp.ativo.nao_circulante.imobilizado,2024,8520.751
+dfc.caixa_fim,2024,114.881

@@ -1,0 +1,116 @@
+# Demonstração do Valor Adicionado (DVA).
+
+rules:
+  - pattern: '^1[\.\s]+receitas$'
+    line_id: dva.receitas
+  - pattern: '^(2[\.\s]+)?insumos adquiridos de terceiros$'
+    line_id: dva.insumos
+  - pattern: '^3[\.\s]+valor adicionado bruto( \(1[\+\-]2\))?$|^valor adicionado bruto( \(1[\+\-]2\))?$'
+    line_id: dva.va_bruto
+  - pattern: '^4[\.\s]+retenc(o|oe)es$|^retenc(o|oe)es$'
+    line_id: dva.retencoes
+  - pattern: '^5[\.\s]+valor adicionado liquido produzido pela entidade(.*)?$|^valor adicionado liquido produzido pela entidade$'
+    line_id: dva.va_liquido
+  - pattern: '^6[\.\s]+valor adicionado recebido em transferencia$|^valor adicionado recebido em transferencia$'
+    line_id: dva.va_recebido_transferencia
+  - pattern: '^valor adicionado total a distribuir(.*)?$'
+    line_id: dva.va_total_distribuir
+  - pattern: '^7[\.\s]+(remunerac(a|i)o do trabalho|pessoal e encargos)$|^remunerac(a|i)o do trabalho$|^pessoal e encargos$'
+    line_id: dva.dist.trabalho
+  - pattern: '^8[\.\s]+(remunerac(a|i)o do governo|impostos,? taxas e contribuic(o|oe)es)$|^remunerac(a|i)o do governo$|^impostos,? taxas e contribuic(o|oe)es$'
+    line_id: dva.dist.governo
+  - pattern: '^9[\.\s]+(remunerac(a|i)o (do |de )?capital de terceiros|capital de terceiros)$|^remunerac(a|i)o (do |de )?capital de terceiros$'
+    line_id: dva.dist.terceiros
+  - pattern: '^10[\.\s]+(remunerac(a|i)o (aos|dos|do) (acionistas|capital proprio))$|^remunerac(a|i)o (do capital proprio|aos acionistas|dos acionistas)$'
+    line_id: dva.dist.acionistas
+  - pattern: '^total do valor distribuido(.*)?$'
+    line_id: dva.total_distribuido
+
+  # Sub-items
+  - pattern: '^receitas operacionais$'
+    line_id: dva.receitas.operacionais
+  - pattern: '^perda/reversao de credito de liquidacao duvidosa$'
+    line_id: dva.receitas.pdd
+  - pattern: '^outras receitas operacionais$'
+    line_id: dva.receitas.outras
+  - pattern: '^custo dos servicos prestados( e produtos vendidos)?$'
+    line_id: dva.insumos.cpv
+  - pattern: '^servicos adquiridos de terceiros$'
+    line_id: dva.insumos.servicos_terceiros
+  - pattern: '^provisoes diversas$'
+    line_id: dva.insumos.provisoes
+  - pattern: '^depreciac(a|i)o/amortizac(a|i)o$'
+    line_id: dva.retencoes.depreciacao
+  - pattern: '^receitas financeiras$'
+    line_id: dva.va_recebido_transferencia.financeiras
+  - pattern: '^salarios, honorarios e beneficios$'
+    line_id: dva.dist.trabalho.salarios
+  - pattern: '^encargos sociais$'
+    line_id: dva.dist.trabalho.encargos
+  - pattern: '^inss$'
+    line_id: dva.dist.governo.inss
+  - pattern: '^impostos e contribuicoes \(exceto irpj e csll\)$|^impostos e taxas$'
+    line_id: dva.dist.governo.outros
+  - pattern: '^alugueis, juros, variac(a|i)o cambial$|^juros (e |sobre )?variac(a|i)o cambial$'
+    line_id: dva.dist.terceiros.alugueis_juros
+  - pattern: '^outras remunerac(o|oe)es a terceiros$'
+    line_id: dva.dist.terceiros.outras
+  - pattern: '^lucro/reserva retidos$|^lucros? retidos?$|^10\.\d+ lucro/reserva retidos$'
+    line_id: dva.dist.acionistas.lucros_retidos
+  - pattern: '^2\.\d+ provisoes( diversas)?$'
+    line_id: dva.insumos.provisoes
+  - pattern: '^receitas? de variac(a|i)o patrimonial$|^receitas? de variac(a|i)o patrimonial e ganhos$'
+    line_id: dva.receitas.outras
+  - pattern: '^remunerac(a|i)o do (capital de )?terceiros$'
+    line_id: dva.dist.terceiros
+
+  # Numeric-prefixed sub-rows (e.g., "1.1 Receitas operacionais") that the
+  # tabular DVA prints flat. Match either form.
+  - pattern: '^1\.1 receitas operacionais$'
+    line_id: dva.receitas.operacionais
+  - pattern: '^1\.2 \(perda\)/reversao de credito de liquidacao duvidosa$|^\(perda\)/reversao de credito de liquidacao duvidosa$'
+    line_id: dva.receitas.pdd
+  - pattern: '^1\.[34] (outras receitas( operacionais)?|receitas nao[\s-]?operacionais)$|^outras$'
+    line_id: dva.receitas.outras
+  - pattern: '^2\.[45] (propaganda e comunicac(a|i)o|utilidades e servicos)$'
+    line_id: dva.insumos.outros
+  - pattern: '^2\.1 custo dos servicos( prestados)?( e produtos vendidos)?$'
+    line_id: dva.insumos.cpv
+  - pattern: '^2\.2 servicos adquiridos de terceiros$'
+    line_id: dva.insumos.servicos_terceiros
+  - pattern: '^2\.3 materiais consumidos$|^materiais consumidos$'
+    line_id: dva.insumos.outros
+  - pattern: '^2\.6 provisoes( diversas)?$'
+    line_id: dva.insumos.provisoes
+  - pattern: '^3 valor adicionado bruto( \(1\+2\))?$'
+    line_id: dva.va_bruto
+  - pattern: '^4\.1 depreciac(a|i)o[/\s]?amortizac(a|i)o$'
+    line_id: dva.retencoes.depreciacao
+  - pattern: '^5 valor adicionado liquido( produzido pela entidade)?$|^valor adicionado liquido$'
+    line_id: dva.va_liquido
+  - pattern: '^6\.1 receitas financeiras$'
+    line_id: dva.va_recebido_transferencia.financeiras
+  - pattern: '^valor adicionado a distribuir(.*)?$|^valor adicionado a disposic(a|i)o (da empresa|para distribuic(a|i)o)$'
+    line_id: dva.va_total_distribuir
+  - pattern: '^7\.1 salarios,? honorarios e beneficios$'
+    line_id: dva.dist.trabalho.salarios
+  - pattern: '^7 (remunerac(a|i)o do trabalho|pessoal e encargos)$|^pessoal e encargos$'
+    line_id: dva.dist.trabalho
+  - pattern: '^7\.[23] encargos sociais$|^encargos sociais$'
+    line_id: dva.dist.trabalho.encargos
+  - pattern: '^8\.1 inss( sobre salarios)?$|^inss sobre salarios$'
+    line_id: dva.dist.governo.inss
+  - pattern: '^8[\.\s]+(remunerac(a|i)o do governo|impostos,? taxas e contribuic(o|oe)es)$|^impostos,? taxas e contribuic(o|oe)es$'
+    line_id: dva.dist.governo
+  - pattern: '^8\.\d+ impostos e contribuic(o|oe)es \(exceto irpj e cs+ll?\)$|^8\.\d+ imposto de renda e contribuicao social$|^impostos e contribuic(o|oe)es \(exceto cs+ll?\)$|^impostos e contribuic(o|oe)es \(exceto irpj e cs+ll?\)$|^contribuicao social \(tributo corrente\)$|^imposto de renda e contribuicao social$'
+    line_id: dva.dist.governo.outros
+  - pattern: '^10\.2 dividendos e juros sobre capital proprio$|^dividendos e juros sobre capital proprio$'
+    line_id: dva.dist.acionistas.lucros_retidos
+  - pattern: '^9\.1 alugueis,? juros,? variac(a|i)o cambial$'
+    line_id: dva.dist.terceiros.alugueis_juros
+  - pattern: '^9\.2 outras remunerac(o|oe)es a terceiros$'
+    line_id: dva.dist.terceiros.outras
+  - pattern: '^10 remunerac(a|i)o (dos|aos) acionistas$|^10\. remunerac(a|i)o de capital proprio$|^remunerac(a|i)o dos acionistas$'
+    line_id: dva.dist.acionistas
+  - pattern: '^dividendos e juros sobre capital proprio$'
+    line_id: dva.dist.acionistas.lucros_retidos

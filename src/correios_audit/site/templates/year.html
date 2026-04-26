@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ year }}</h1>
+
+<p class="lede">{{ summary }}</p>
+
+{% for chart in charts %}
+<div class="chart-block">
+  <div id="{{ chart.id }}" class="chart"></div>
+  {% if chart.disclaimers %}
+  <details class="chart-notes">
+    <summary>Notas sobre este gráfico</summary>
+    <ul>
+    {% for d in chart.disclaimers %}
+      <li>{{ d }}</li>
+    {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>
+{% endfor %}
+<script>
+{% for chart in charts %}
+Plotly.newPlot({{ chart.id | tojson }}, {{ chart.data | safe }}, {{ chart.layout | safe }}, {responsive: true});
+{% endfor %}
+</script>
+
+{% if coverage_notes %}
+<aside class="coverage">
+  <strong>Cobertura das demonstrações exibidas:</strong>
+  <ul>
+  {% for note in coverage_notes %}
+    <li>{{ note }}</li>
+  {% endfor %}
+  </ul>
+</aside>
+{% endif %}
+
+{% for stmt in statements %}
+<section class="statement">
+  <h2>{{ stmt.title }}</h2>
+  {% if stmt.subtitle %}<p class="subtitle">{{ stmt.subtitle }}</p>{% endif %}
+  <div class="scroll-x">
+  <table class="financial">
+    <thead>
+      <tr>
+        <th class="label">Linha</th>
+        {% for col in stmt.columns %}<th class="num">{{ col }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in stmt.rows %}
+      <tr class="{% if row.is_total %}total{% endif %} depth-{{ row.depth }}">
+        <td class="label">{{ row.label }}</td>
+        {% for v in row["values"] %}
+        <td class="num {% if v is not none and v < 0 %}neg{% endif %}">
+          {% if v is none %}—{% else %}{{ v | format_num }}{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+
+{% if qtr_table %}
+<section class="statement">
+  <h2>{{ qtr_table.title }}</h2>
+  {% if qtr_table.subtitle %}<p class="subtitle">{{ qtr_table.subtitle }}</p>{% endif %}
+  <div class="scroll-x">
+  <table class="financial">
+    <thead>
+      <tr>
+        <th class="label">Linha</th>
+        {% for col in qtr_table.columns %}<th class="num">{{ col }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in qtr_table.rows %}
+      <tr class="{% if row.is_total %}total{% endif %} depth-{{ row.depth }}">
+        <td class="label">{{ row.label }}</td>
+        {% for v in row["values"] %}
+        <td class="num {% if v is not none and v < 0 %}neg{% endif %}">
+          {% if v is none %}—{% else %}{{ v | format_num }}{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+<p class="muted">
+  Fonte: <a href="../doc/{{ doc_id }}.html">{{ doc_id }}</a>
+  · valores em R$ milhares (×1.000 reais)
+</p>
+{% endblock %}

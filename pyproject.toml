@@ -1,0 +1,46 @@
+[project]
+name = "correios-audit"
+version = "0.1.0"
+description = "Long-horizon financial audit of Correios (ECT) from public PDF disclosures"
+license = { text = "ISC" }
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pdfplumber>=0.11",
+    "pymupdf>=1.24",
+    "ocrmypdf>=16.0",
+    "pandas>=2.2",
+    "pyarrow>=16.0",
+    "pyyaml>=6.0",
+    "httpx>=0.27",
+    "tenacity>=9.0",
+    "jinja2>=3.1",
+    "plotly>=5.22",
+    "python-magic>=0.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-pyyaml",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/correios_audit"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

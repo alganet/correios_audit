@@ -1,0 +1,178 @@
+# Demonstração dos Fluxos de Caixa (DFC) — método indireto.
+# In Brazilian disclosures, DFC sections are typically named:
+#   "Atividades operacionais", "Atividades de investimento", "Atividades de financiamento"
+
+rules:
+  - pattern: '^atividades operacionais$'
+    line_id: dfc.atividades_operacionais
+  - pattern: '^resultado do (periodo|exercicio)$'
+    line_id: dfc.op.resultado_periodo
+  - pattern: '^itens (do |de )?resultado que nao (afetam|interferem) (no |o )?caixa$|^ajustes ao resultado(:)?$|^itens que nao (afetam|interferem) (no |o )?caixa$'
+    line_id: dfc.op.itens_nao_caixa
+  - pattern: '^depreciac(a|i)o( e amortizac(a|i)o)?$|^depreciacoes? e amortizacoes?$'
+    line_id: dfc.op.itens_nao_caixa.depreciacao_amortizacao
+  - pattern: '^provisoes( diversas)?$'
+    line_id: dfc.op.itens_nao_caixa.provisoes
+  - pattern: '^mutac(o|oe)es patrimoniais$|^variacoes (de )?ativos? e passivos?$'
+    line_id: dfc.op.mutacoes_patrimoniais
+  - pattern: '^despesas? de variac(a|i)o patrimonial e perdas$|^receitas? de variac(a|i)o patrimonial$|^atualizac(a|i)o de creditos tributarios.*$|^resultado da alienac(a|i)o de bens$|^ganhos/perdas\s*-\s*valor justo.*$|^resultado de participac(a|i)o em controlada(\b.*)?$'
+    line_id: dfc.op.itens_nao_caixa.outros
+  - pattern: '^contas a receber$|^aumento d[oe] contas a receber$|^\(diminuic(a|i)o\)/aumento d[oe] contas a receber$|^aumento/\(diminuic(a|i)o\) d[oe] contas a receber$'
+    line_id: dfc.op.mutacoes.contas_receber
+    where: 'parent_section == "operacional"'
+  - pattern: '^estoques$|^aumento d[oe] estoques$|^\(diminuic(a|i)o\)/aumento d[oe] estoques$'
+    line_id: dfc.op.mutacoes.estoques
+    where: 'parent_section == "operacional"'
+  - pattern: '^outros valores e bens$|^aumento d[oe] outros valores e bens$|^diminuic(a|i)o/aumento d[oe] outros valores e bens$|^\(diminuic(a|i)o\)/aumento d[oe] outros valores e bens$|^aumento/diminuic(a|i)o de outros valores e bens.*$'
+    line_id: dfc.op.mutacoes.outros_ativos
+    where: 'parent_section == "operacional"'
+  - pattern: '^realizavel a longo prazo$|^aumento/diminuic(a|i)o d[oa]s? realizaveis a longo prazo$|^\(diminuic(a|i)o\)/aumento d[oa]s? realizaveis? a longo prazo$|^aumento d[oa]s? realizaveis? a longo prazo$'
+    line_id: dfc.op.mutacoes.realizavel_lp
+    where: 'parent_section == "operacional"'
+  - pattern: '^fornecedores$|^\(diminuic(a|i)o\)/aumento d[oe]s? fornecedores$|^aumento/\(diminuic(a|i)o\) d[oe]s? fornecedores$'
+    line_id: dfc.op.mutacoes.fornecedores
+    where: 'parent_section == "operacional"'
+  - pattern: '^aumento (do |de )?convenio postal saude$|^aumento (do |de )?(convenio )?postal saude$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^salarios e encargos sociais$'
+    line_id: dfc.op.mutacoes.salarios
+    where: 'parent_section == "operacional"'
+  - pattern: '^impostos e contribuicoes$'
+    line_id: dfc.op.mutacoes.impostos
+    where: 'parent_section == "operacional"'
+  - pattern: '^arrendamento$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^incentivo financeiro diferido.*$|^convenio postal saude$|^outras$|^passivos contingentes$|^bens de direito de uso$|^obrigacoes financeiras a pagar$|^outras obrigacoes$|^precatorios$|^contas internacionais$|^outros valores e bens$|^outros creditos$|^arrendamento$|^remensurac(a|i)o de.*$|^aumento/diminuic(a|i)o d[oa]s? outras obrigac(o|oe)es.*$|^diminuic(a|i)o d[oa]s? receitas recebidas (antecipadamente|anteciapadas?)$|^diminuic(a|i)o/aumento d[oa]s? provis(o|oe)es.*$|^aumento/diminuic(a|i)o d[oa]s? provis(o|oe)es.*$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^recursos liquidos gerados (nas|pelas) atividades? operacionais$|^caixa liquido (gerado|aplicado|originado|consumido) (pelas|nas) atividades? operacionais$'
+    line_id: dfc.op.recursos_liquidos
+
+  - pattern: '^atividades de investimento$'
+    line_id: dfc.atividades_investimento
+  - pattern: '^aplicacoes financeiras$|^diminuic(a|i)o d[oa]s? aplicac(o|oe)es financeiras$|^aumento d[oa]s? aplicac(o|oe)es financeiras$|^\(diminuic(a|i)o\)/aumento d[oa]s? aplicac(o|oe)es financeiras$'
+    line_id: dfc.inv.aplicacoes_financeiras
+    where: 'parent_section == "investimento"'
+  - pattern: '^aplicac(o|oe)es no imobilizado(/intangivel)?$|^aplicac(o|oe)es no imobilizado e intangivel$'
+    line_id: dfc.inv.imobilizado_adicoes
+    where: 'parent_section == "investimento"'
+  - pattern: '^fluxo de caixa (usado|aplicado) (nas?|pelas) atividades? de investimento$'
+    line_id: dfc.inv.recursos_liquidos
+  - pattern: '^dividendos( pagos)?$|^dividendos e juros sobre capital proprio$|^transferencias para a uniao\s*[—-]?\s*juros sobre capital proprio.*$|^transferencias para a uniao$'
+    line_id: dfc.fin.amortizacoes
+    where: 'parent_section == "financiamento"'
+  - pattern: '^fluxo de caixa (usado|aplicado|gerado) (nas?|pelas) atividades? de financiamento$'
+    line_id: dfc.fin.recursos_liquidos
+  - pattern: '^adicoes(\s*[-–—]\s*(ativo )?imobilizado)?$|^aquisicoes? de imobilizado$|^adicoes ao imobilizado$'
+    line_id: dfc.inv.imobilizado_adicoes
+  - pattern: '^adicoes(\s*[-–—]\s*(ativo )?intangivel)?$|^aquisicoes? de intangivel$|^adicoes ao intangivel$'
+    line_id: dfc.inv.intangivel_adicoes
+  - pattern: '^baixas\s*[-–—]\s*(ativo )?imobilizado$|^baixas? d[oe]s? (ativo )?imobilizado$'
+    line_id: dfc.inv.imobilizado_baixas
+  - pattern: '^baixas\s*[-–—]\s*(ativo )?intangivel$|^baixas? d[oe]s? (ativo )?intangivel$'
+    line_id: dfc.inv.intangivel_adicoes
+  - pattern: '^(adicoes|baixas)\s*[-–—]\s*propriedades para investimento$|^baixas das propriedades para investimento$'
+    line_id: dfc.inv.propriedades_investimento
+  - pattern: '^baixas\s*[-–—]\s*museu$|^bens sucateados\s*[-–—]\s*imobilizado$|^baixas (de|d[oa]s) mantidos para venda$'
+    line_id: dfc.inv.imobilizado_baixas
+  - pattern: '^integralizac(a|i)o de capital\s*[-–—]\s*correiospar$|^recebimento pelo desinvestimento\s*[-–—]\s*correiospar.*$'
+    line_id: dfc.inv.aplicacoes_financeiras
+    where: 'parent_section == "investimento"'
+  - pattern: '^fluxo de caixa aplicado nas? atividades? de investimento$|^caixa liquido (aplicado|originado) nas? atividades? de investimento$'
+    line_id: dfc.inv.recursos_liquidos
+
+  - pattern: '^atividades de financiamento$'
+    line_id: dfc.atividades_financiamento
+  - pattern: '^capitac(a|i)o de emprestimo$|^captacao de emprestimos?$'
+    line_id: dfc.fin.captacoes
+  - pattern: '^emprestimos e financiamentos$'
+    line_id: dfc.fin.amortizacoes
+  - pattern: '^bens (de )?direito de uso\s*[-–—]?\s*principal$|^bens (de )?direito de uso$|^arrendamento$'
+    line_id: dfc.fin.arrendamento
+    where: 'parent_section == "financiamento"'
+  - pattern: '^bens (de )?direito de uso\s*[-–—]?\s*juros$|^emprestimos? e financiamentos?\s*[-–—]?\s*juros$'
+    line_id: dfc.fin.juros_pagos
+  - pattern: '^emprestimos? e financiamentos?\s*[-–—]?\s*principal$'
+    line_id: dfc.fin.amortizacoes
+  - pattern: '^adiantamento para futuro aumento de capital\s*[-–—]?\s*afac$|^integralizac(a|i)o\s*[-–—]\s*afac$'
+    line_id: dfc.fin.captacoes
+    where: 'parent_section == "financiamento"'
+  - pattern: '^caixa originado nas? atividades? de financiamento$|^caixa liquido (gerado|aplicado|originado) nas? atividades? de financiamento$'
+    line_id: dfc.fin.recursos_liquidos
+
+  - pattern: '^variac(a|i)o liquida de caixa( e equivalentes( de caixa)?)?$|^aumento\s*\(reduc(a|i)o\) de caixa.*$'
+    line_id: dfc.variacao_caixa
+  - pattern: '^caixa e equivalentes?( de caixa)? no inicio do (periodo|exercicio)$|^caixa( e equivalente)? no inicio$'
+    line_id: dfc.caixa_inicio
+  - pattern: '^caixa e equivalentes?( de caixa)? no (final|fim) do (periodo|exercicio)$|^caixa( e equivalente)? no (final|fim)$'
+    line_id: dfc.caixa_fim
+
+  # ---- Operational sub-mutations & legacy aliases ----------------------------
+  - pattern: '^salarios e consignacoes$|^salarios( e encargos)?$|^aumento d[oe]s? salarios( e consignacoes)?$|^\(diminuic(a|i)o\)/aumento d[oe]s? salarios.*$|^aumento/\(diminuic(a|i)o\) d[oe]s? salarios.*$'
+    line_id: dfc.op.mutacoes.salarios
+    where: 'parent_section == "operacional"'
+  - pattern: '^encargos sociais$|^aumento d[oe]s? encargos sociais$'
+    line_id: dfc.op.mutacoes.salarios
+    where: 'parent_section == "operacional"'
+  - pattern: '^outras obrigacoes$|^outras$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^precatorios( \(circulante e nao circulante\))?$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^arrendamento \(ativos e passivos\)$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^contas a receber \(circulante e nao circulante\)$'
+    line_id: dfc.op.mutacoes.contas_receber
+    where: 'parent_section == "operacional"'
+  - pattern: '^realizavel a longo prazo \(exceto contas a receber e aplicacoes\)$'
+    line_id: dfc.op.mutacoes.realizavel_lp
+    where: 'parent_section == "operacional"'
+  - pattern: '^convenio postal saude \(passivo\)$|^convenio postal saude\b.*$'
+    line_id: dfc.op.mutacoes.outras
+    where: 'parent_section == "operacional"'
+  - pattern: '^lucro liquido do (periodo|exercicio)$|^lucro do (periodo|exercicio)$'
+    line_id: dfc.op.resultado_periodo
+  - pattern: '^\(=\) caixa liquido da atividade operacional$|^caixa liquido (da atividade|gerado pelas atividades) operacionai?s?$'
+    line_id: dfc.op.recursos_liquidos
+
+  # Investment activities (legacy aliases).
+  - pattern: '^aplicacoes financeiras \(ativo nao circulante\)$|^aplicacoes em investimentos.*$'
+    line_id: dfc.inv.aplicacoes_financeiras
+    where: 'parent_section == "investimento"'
+  - pattern: '^adicoes de ativo imobilizado$|^adicoes ao imobilizado$'
+    line_id: dfc.inv.imobilizado_adicoes
+    where: 'parent_section == "investimento"'
+  - pattern: '^adicoes de ativo intangivel$|^adicoes ao intangivel$'
+    line_id: dfc.inv.intangivel_adicoes
+    where: 'parent_section == "investimento"'
+  - pattern: '^baixas( do| de)? (ativo )?imobilizado$|^baixas\s*-\s*(ativo )?imobilizado$'
+    line_id: dfc.inv.imobilizado_baixas
+    where: 'parent_section == "investimento"'
+  - pattern: '^\(=\) caixa liquido das atividades de investimento$|^caixa liquido consumido pelas atividades de investimento$|^caixa liquido (gerado|aplicado|originado|consumido) (pelas|nas) atividades de investimento$'
+    line_id: dfc.inv.recursos_liquidos
+  - pattern: '^caixa liquido (gerado|aplicado|originado|consumido) (pelas|nas) atividades$|^caixa liquido consumido pelas atividades$'
+    line_id: dfc.op.recursos_liquidos
+    where: 'parent_section == "operacional"'
+  - pattern: '^caixa liquido consumido pelas atividades$'
+    line_id: dfc.inv.recursos_liquidos
+    where: 'parent_section == "investimento"'
+  - pattern: '^caixa liquido consumido pelas atividades$'
+    line_id: dfc.fin.recursos_liquidos
+    where: 'parent_section == "financiamento"'
+
+  # Financing activities (legacy aliases).
+  - pattern: '^transferencias para a uniao(\s*[—-]\s*juros sobre capital proprio e dividendos)?$|^transferencias para a uniao$'
+    line_id: dfc.fin.amortizacoes
+    where: 'parent_section == "financiamento"'
+  - pattern: '^arrendamento\s*-\s*principal$'
+    line_id: dfc.fin.arrendamento
+    where: 'parent_section == "financiamento"'
+  - pattern: '^arrendamento\s*-\s*juros$'
+    line_id: dfc.fin.juros_pagos
+    where: 'parent_section == "financiamento"'
+  - pattern: '^caixa liquido (gerado|aplicado|originado|consumido) (pelas|nas) atividades de financiamento$|^caixa (originado|aplicado|consumido)( \(aplicado\))?( \(originado\))? nas atividades de financiamento$'
+    line_id: dfc.fin.recursos_liquidos

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Auditoria das demonstrações financeiras dos Correios</h1>
+
+<p class="lede">
+  Visão consolidada das finanças da Empresa Brasileira de Correios e Telégrafos
+  (ECT) construída a partir de {{ n_docs }} demonstrações financeiras públicas
+  cobrindo o período {{ year_min }}–{{ year_max }}. Todos os números aqui são
+  retirados diretamente dos PDFs auditados. Cada figura possui um link de volta
+  para a página do PDF onde aparece originalmente.
+</p>
+
+<aside class="coverage">
+  <strong>Como ler estes dados:</strong>
+  <ul>
+  {% for note in coverage_notes %}
+    <li>{{ note }}</li>
+  {% endfor %}
+  </ul>
+  {% if transition_years %}
+  <p class="muted-tight">
+    Marcações verticais nos gráficos e bordas mais escuras nas tabelas
+    sinalizam mudanças de regime contábil:
+    {% for t in transition_years %}
+      <strong>{{ t.year }}</strong> — {{ t.label }}{% if not loop.last %}; {% endif %}
+    {% endfor %}.
+  </p>
+  {% endif %}
+</aside>
+
+<section class="kpis">
+  {% for kpi in kpis %}
+  <div class="kpi">
+    <h3>{{ kpi.label }}</h3>
+    <div class="value {{ kpi.tone }}">{{ kpi.formatted }}</div>
+    <div class="period">{{ kpi.period }}</div>
+  </div>
+  {% endfor %}
+</section>
+
+<h2>Tendências</h2>
+
+{% for chart in charts %}
+<div class="chart-block">
+  <div id="{{ chart.id }}" class="chart"></div>
+  {% if chart.disclaimers %}
+  <details class="chart-notes">
+    <summary>Notas sobre este gráfico</summary>
+    <ul>
+    {% for d in chart.disclaimers %}
+      <li>{{ d }}</li>
+    {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>
+{% endfor %}
+
+<script>
+{% for chart in charts %}
+Plotly.newPlot({{ chart.id | tojson }}, {{ chart.data | safe }}, {{ chart.layout | safe }}, {responsive: true});
+{% endfor %}
+</script>
+
+{% if timeline %}
+<h2>Visão multi-anual (R$ milhões)</h2>
+<p class="muted">
+  Linhas em branco (—) indicam que aquela linha não foi extraída para o ano.
+  Colunas com borda mais escura indicam transições de regime contábil — passe
+  o mouse para o motivo.
+</p>
+<div class="scroll-x">
+<table class="financial">
+  <thead>
+    <tr>
+      <th class="label">Linha</th>
+      {% for y in timeline.years %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <th class="num{% if transition %} transition{% endif %}"
+            {% if transition %}title="{{ transition.long_text }}"{% endif %}>
+          {{ y }}{% if transition %} <span class="tmark">▎</span>{% endif %}
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in timeline.rows %}
+    <tr>
+      <td class="label">{{ row.label }}</td>
+      {% for y in timeline.years %}
+        {% set v = row["values"][loop.index0] %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <td class="num{% if v is not none and v < 0 %} neg{% endif %}{% if transition %} transition{% endif %}">
+          {% if v is none %}—{% else %}{{ (v / 1000000) | format_num_simple }}{% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<h2>Anos cobertos</h2>
+<ul class="year-grid">
+  {% for y in years %}
+  <li><a href="year/{{ y }}.html">{{ y }}</a></li>
+  {% endfor %}
+</ul>
+
+<h2>Estado da extração</h2>
+<table class="status">
+  <thead><tr><th>Documento</th><th>Linhas canonizadas</th><th>Origem</th></tr></thead>
+  <tbody>
+  {% for doc in docs %}
+    <tr>
+      <td><a href="doc/{{ doc.doc_id }}.html">{{ doc.doc_id }}</a></td>
+      <td class="num">{{ doc.n_rows }}</td>
+      <td><a href="{{ doc.url }}" target="_blank" rel="noopener">PDF</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

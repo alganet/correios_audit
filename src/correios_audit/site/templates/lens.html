@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ lens_title }}</h1>
+<p class="lede">{{ lens_description }}</p>
+
+{% for chart in charts %}
+<div class="chart-block">
+  <div id="{{ chart.id }}" class="chart"></div>
+  {% if chart.disclaimers %}
+  <details class="chart-notes">
+    <summary>Notas sobre este gráfico</summary>
+    <ul>
+    {% for d in chart.disclaimers %}
+      <li>{{ d }}</li>
+    {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+</div>
+{% endfor %}
+
+<h2>Série histórica (R$ milhões)</h2>
+
+{% if coverage_notes %}
+<aside class="coverage">
+  <strong>Cobertura desta seção:</strong>
+  <ul>
+  {% for note in coverage_notes %}
+    <li>{{ note }}</li>
+  {% endfor %}
+  </ul>
+</aside>
+{% endif %}
+
+<p class="muted">
+  Células em branco (—) indicam que a linha não foi extraída para o ano. As
+  colunas marcadas com borda mais escura sinalizam transições de regime
+  contábil ou metodológico — passe o mouse para ver o motivo.
+</p>
+
+<div class="scroll-x">
+<table class="financial">
+  <thead>
+    <tr>
+      <th class="label">Linha</th>
+      {% for y in years %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <th class="num{% if transition %} transition{% endif %}"
+            {% if transition %}title="{{ transition.long_text }}"{% endif %}>
+          {{ y }}{% if transition %} <span class="tmark">▎</span>{% endif %}
+        </th>
+      {% endfor %}
+      <th class="num cov">Cobertura</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr class="{% if row.is_total %}total{% endif %} depth-{{ row.depth }}">
+      <td class="label">{{ row.label }}</td>
+      {% for y in years %}
+        {% set v = row["values"][loop.index0] %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <td class="num{% if v is not none and v < 0 %} neg{% endif %}{% if transition %} transition{% endif %}">
+          {% if v is none %}—{% else %}{{ (v / 1000000) | format_num_simple }}{% endif %}
+        </td>
+      {% endfor %}
+      <td class="num cov">
+        {% if row.first_year is not none %}{{ row.first_year }}–{{ row.last_year }}{% else %}—{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<script>
+{% for chart in charts %}
+Plotly.newPlot({{ chart.id | tojson }}, {{ chart.data | safe }}, {{ chart.layout | safe }}, {responsive: true});
+{% endfor %}
+</script>
+{% endblock %}

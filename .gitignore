@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Raw + interim data is reproducible from URLs; keep it out of git.
+data/raw/pdfs/
+data/interim/
+data/site/
+
+# Processed artifacts can be rebuilt; small enough to track if desired.
+data/processed/*.parquet
+data/processed/by_year/
+
+# Site build output
+*.html
+!src/correios_audit/site/templates/*.html

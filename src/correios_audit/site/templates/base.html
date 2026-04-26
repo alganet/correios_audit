@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} — Auditoria Correios</title>
+  <link rel="stylesheet" href="{{ root }}static/style.css">
+  <script src="{{ root }}static/plotly.min.js"></script>
+</head>
+<body>
+<header>
+  <a href="{{ root }}index.html" class="brand">Auditoria Correios</a>
+  <nav>
+    <a href="{{ root }}lens/profitability.html">Lucratividade</a>
+    <a href="{{ root }}lens/balance_sheet.html">Balanço</a>
+    <a href="{{ root }}lens/cash_flow.html">Caixa</a>
+    <a href="{{ root }}lens/governance.html">Governança</a>
+    <a href="{{ root }}lens/ratios.html">Indicadores</a>
+    <a href="{{ root }}years.html">Anos</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>
+  Dados extraídos de demonstrações financeiras públicas em
+  <a href="https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras">correios.com.br</a>.
+  Construído de forma reprodutível a partir de PDFs originais — código aberto,
+  sem extração assistida por LLM.
+  Última build: {{ build_date }}.
+</footer>
+</body>
+</html>

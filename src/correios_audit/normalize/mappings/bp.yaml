@@ -1,0 +1,502 @@
+# Balanço Patrimonial label → canonical line_id.
+# Mapping is sensitive to `side` (ativo/passivo) so identical labels on each
+# side resolve to different canonical lines.
+
+rules:
+  # ---- ATIVO ------------------------------------------------------------------
+  - pattern: '^ativo$|^total do ativo$'
+    side: ativo
+    line_id: bp.ativo.total
+
+  - pattern: '^circulante$|^ativo circulante$'
+    side: ativo
+    line_id: bp.ativo.circulante
+  - pattern: '^caixa e equivalentes? de caixa$'
+    side: ativo
+    line_id: bp.ativo.circulante.caixa_equivalentes
+  - pattern: '^aplicacoes( financeiras)?$'
+    side: ativo
+    line_id: bp.ativo.circulante.aplicacoes
+    where: 'parent_section == "circulante"'
+  - pattern: '^contas a receber$|^contas a receber de clientes$|^clientes$'
+    side: ativo
+    line_id: bp.ativo.circulante.contas_a_receber
+    where: 'parent_section == "circulante"'
+  - pattern: '^estoques$'
+    side: ativo
+    line_id: bp.ativo.circulante.estoques
+  - pattern: '^titulos? e valores mobiliarios$'
+    side: ativo
+    line_id: bp.ativo.circulante.titulos_valores_mobiliarios
+    where: 'parent_section == "circulante"'
+  - pattern: '^contas a receber nacionais$'
+    side: ativo
+    line_id: bp.ativo.circulante.contas_a_receber.nacionais
+    where: 'parent_section == "circulante"'
+  - pattern: '^contas a receber internacionais$'
+    side: ativo
+    line_id: bp.ativo.circulante.contas_a_receber.internacionais
+    where: 'parent_section == "circulante"'
+  - pattern: '^adiantamentos? de pessoal$|^adiantamentos$'
+    side: ativo
+    line_id: bp.ativo.circulante.adiantamento_pessoal
+    where: 'parent_section == "circulante"'
+  - pattern: '^convenio postal saude$'
+    side: ativo
+    line_id: bp.ativo.circulante.convenio_postal_saude
+    where: 'parent_section == "circulante"'
+  - pattern: '^cobranca juridica/inadimplencia$|^cobranca juridica$'
+    side: ativo
+    line_id: bp.ativo.circulante.cobranca_juridica
+  - pattern: '^despesas antecipadas$'
+    side: ativo
+    line_id: bp.ativo.circulante.despesas_antecipadas
+  - pattern: '^valores a apurar$'
+    side: ativo
+    line_id: bp.ativo.circulante.valores_apurar
+  - pattern: '^valores a compensar( / restituir)?$|^impostos e encargos sociais a compensar$'
+    side: ativo
+    line_id: bp.ativo.circulante.tributos_a_compensar
+    where: 'parent_section == "circulante"'
+  - pattern: '^outros valores e bens$|^outros creditos$|^outros ativos$'
+    side: ativo
+    line_id: bp.ativo.circulante.outros_valores_e_bens
+    where: 'parent_section == "circulante"'
+  - pattern: '^tributos a compensar$'
+    side: ativo
+    line_id: bp.ativo.circulante.tributos_a_compensar
+    where: 'parent_section == "circulante"'
+
+  - pattern: '^nao[\s-]?circulante$|^ativo nao[\s-]?circulante$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante
+  - pattern: '^realizavel a longo prazo$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo
+  - pattern: '^contas a receber$|^contas a receber de clientes$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.contas_a_receber
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^aplicacoes( financeiras)?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.aplicacoes
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^tributos diferidos$|^impostos? diferidos?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.tributos_diferidos
+  - pattern: '^depositos \(jud\.?/?rec\.?/?adm\.?\)$|^depositos judiciais( e administrativos)?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.depositos_judiciais
+  - pattern: '^tributos a compensar$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.tributos_a_compensar
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^outros valores e bens$|^outros creditos$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.outros
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^investimentos$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.investimentos
+  - pattern: '^propriedades para investimento(s)?$|^propriedades para$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.propriedades_investimento
+  - pattern: '^museu$|^acervo museologico$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.museu
+  - pattern: '^contas a receber( de clientes)? nacionais$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.contas_a_receber.nacionais
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^contas a receber( de clientes)? internacionais$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.contas_a_receber.internacionais
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^depositos judiciais, recursais e( administrativos)?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.depositos_judiciais
+  - pattern: '^imobilizado$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado
+  - pattern: '^intangivel$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.intangivel
+  - pattern: '^imoveis$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.imoveis
+  - pattern: '^moveis( e equipamentos| e utensilios)?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.moveis
+  - pattern: '^imoveis - arrendamento$|^imoveis arrendamento$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.arrendamento
+  - pattern: '^bens (de )?direito de uso(.*)?$|^imoveis de direito de uso$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.bens_direito_uso
+  - pattern: '^\(-\) depreciac(a|i)o de imoveis de direito de uso$|^\(-\) depreciac(a|i)o de bens de direito de uso$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.depreciacao
+  - pattern: '^softwares?$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.intangivel
+  - pattern: '^\(-\) amortizac(a|i)o( acumulada)?$|^amortizac(a|i)o acumulada$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.depreciacao
+  - pattern: '^\(-\) perda ao valor recuperavel$|^perda ao valor recuperavel$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.depreciacao
+  - pattern: '^nao circulante mantido para venda$|^ativo mantido para venda$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.outros_mantido_venda
+  - pattern: '^\(-\) depreciac(a|i)o acumulada$|^depreciac(a|i)o acumulada$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.depreciacao
+
+  # ---- PASSIVO ----------------------------------------------------------------
+  - pattern: '^passivo$|^total do passivo( e patrimonio( liquido)?)?$|^total do passivo$'
+    side: passivo
+    line_id: bp.passivo.total
+  - pattern: '^circulante$|^passivo circulante$'
+    side: passivo
+    line_id: bp.passivo.circulante
+  - pattern: '^fornecedores$'
+    side: passivo
+    line_id: bp.passivo.circulante.fornecedores
+  - pattern: '^salarios e consignacoes$'
+    side: passivo
+    line_id: bp.passivo.circulante.salarios_consignacoes
+    where: 'parent_section == "circulante"'
+  - pattern: '^encargos sociais$'
+    side: passivo
+    line_id: bp.passivo.circulante.encargos_sociais
+    where: 'parent_section == "circulante"'
+  - pattern: '^precatorios( e rpvs)?$|^precatorios judiciais$'
+    side: passivo
+    line_id: bp.passivo.circulante.precatorios
+    where: 'parent_section == "circulante"'
+  - pattern: '^transferencias para a uniao$'
+    side: passivo
+    line_id: bp.passivo.circulante.transferencias_uniao
+  - pattern: '^participac(a|i)o nos lucros e resultados( . plr e rva| - plr/rva|.*)?$|^plr( e rva)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.participacao_lucros
+    where: 'parent_section == "circulante"'
+  - pattern: '^dividendos a pagar$'
+    side: passivo
+    line_id: bp.passivo.circulante.dividendos_a_pagar
+  - pattern: '^contas internacionais a pagar$'
+    side: passivo
+    line_id: bp.passivo.circulante.contas_internacionais
+    where: 'parent_section == "circulante"'
+  - pattern: '^beneficios a empregados$|^salarios e encargos sociais$|^obrigacoes trabalhistas$|^pessoal e encargos sociais$'
+    side: passivo
+    line_id: bp.passivo.circulante.beneficios_a_empregados
+    where: 'parent_section == "circulante"'
+  - pattern: '^impostos e contribuicoes( a recolher)?$|^obrigacoes (fiscais|tributarias)$|^tributos a recolher$'
+    side: passivo
+    line_id: bp.passivo.circulante.impostos_a_pagar
+  - pattern: '^arrecadacoes e recebimentos$'
+    side: passivo
+    line_id: bp.passivo.circulante.arrecadacoes_recebimentos
+  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$|^receitas a apropriar$'
+    side: passivo
+    line_id: bp.passivo.circulante.adiantamentos_clientes
+    where: 'parent_section == "circulante"'
+  - pattern: '^contas internacionais$'
+    side: passivo
+    line_id: bp.passivo.circulante.contas_internacionais
+    where: 'parent_section == "circulante"'
+  - pattern: '^processos judiciais$|^provisoes para contingencias$|^contingencias$'
+    side: passivo
+    line_id: bp.passivo.circulante.processos_judiciais
+    where: 'parent_section == "circulante"'
+  - pattern: '^emprestimos$|^emprestimos e financiamentos$'
+    side: passivo
+    line_id: bp.passivo.circulante.emprestimos
+    where: 'parent_section == "circulante"'
+  - pattern: '^arrendamento( mercantil)?$|^passivo de arrendamento$'
+    side: passivo
+    line_id: bp.passivo.circulante.arrendamento
+    where: 'parent_section == "circulante"'
+  - pattern: '^instrumentos financeiros - derivativos$|^derivativos$'
+    side: passivo
+    line_id: bp.passivo.circulante.derivativos
+    where: 'parent_section == "circulante"'
+  - pattern: '^outros (creditos|valores|debitos)$|^outras obrigacoes$'
+    side: passivo
+    line_id: bp.passivo.circulante.outros
+    where: 'parent_section == "circulante"'
+
+  - pattern: '^nao[\s-]?circulante$|^passivo nao[\s-]?circulante$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante
+  - pattern: '^contas internacionais$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.contas_internacionais
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.adiantamentos_clientes
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^beneficios?( pos[\s-]?emprego| a empregados)?$|^postalis$|^obrigacoes pos[\s-]?emprego$|^plano postalis$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.beneficios_pos_emprego
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^beneficios?( pos[\s-]?emprego| a empregados)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.beneficios_a_empregados
+    where: 'parent_section == "circulante"'
+  - pattern: '^tributos diferidos$|^impostos? diferidos?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.tributos_diferidos
+  - pattern: '^processos judiciais$|^provisoes para contingencias$|^contingencias$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.processos_judiciais
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^arrendamento( mercantil)?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.arrendamento
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^outros (creditos|valores)$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.outros
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^precatorios( e rpvs)?$|^precatorios judiciais$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.precatorios
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^obrigacoes? trabalhistas?( -? ifd)?$|^incentivo financeiro diferido( -? ifd)?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.outros
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^convenio postal saude$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.convenio_saude
+    where: 'parent_section == "nao_circulante"'
+
+  # ---- PATRIMONIO LIQUIDO -----------------------------------------------------
+  - pattern: '^patrimonio liquido( negativo)?$|^total do patrimonio liquido$'
+    side: passivo
+    line_id: bp.patrimonio_liquido
+  - pattern: '^capital( social)?$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.capital
+  - pattern: '^ajuste (de )?avaliacao patrimonial(\s*-\s*aap)?(-aap)?$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.aap
+  - pattern: '^outros resultados abrangentes(\s*-\s*ora)?$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.ora
+  - pattern: '^reservas? de lucros?$|^reservas?$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.reservas
+  - pattern: '^prejuizos? acumulados?$|^lucros?(/| ou )prejuizos? acumulados?$|^lucros? acumulados?$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.lucros_prejuizos_acumulados
+  - pattern: '^reserva legal$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.reservas.legal
+  - pattern: '^reserva de lucros a realizar$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.reservas.lucros_realizar
+  - pattern: '^reserva (p/|para )?projeto de investimento$|^reserva p/ projeto de investimento$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.reservas.investimento
+  - pattern: '^reserva estatutaria$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.reservas.estatutaria
+  - pattern: '^dividendo adicional proposto$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.dividendo_adicional
+  - pattern: '^mandados e precatorios$'
+    side: passivo
+    line_id: bp.passivo.circulante.precatorios
+    where: 'parent_section == "circulante"'
+
+  # ---- BR-GAAP / legacy ATIVO -------------------------------------------------
+  # Pre-IFRS BPs name "Disponível" as the circulante header for caixa+bancos+
+  # short-term investments. Map plain "Caixa", "Bancos", and the parent
+  # "Disponível" individually so each historical figure is preserved.
+  - pattern: '^disponivel$|^disponibilidades$'
+    side: ativo
+    line_id: bp.ativo.disponivel
+  - pattern: '^caixa$'
+    side: ativo
+    line_id: bp.ativo.circulante.caixa_equivalentes.caixa
+  - pattern: '^bancos$|^bancos conta movimento$'
+    side: ativo
+    line_id: bp.ativo.circulante.caixa_equivalentes.bancos
+  - pattern: '^aplicacoes$'
+    side: ativo
+    line_id: bp.ativo.circulante.caixa_equivalentes.aplicacoes
+    where: 'parent_section == "" or parent_section == "circulante"'
+  - pattern: '^caixa restrito$'
+    side: ativo
+    line_id: bp.ativo.circulante.caixa_restrito
+  # Pre-IFRS "Permanente" parent and its "Diferido" sub-line.
+  - pattern: '^permanente$'
+    side: ativo
+    line_id: bp.ativo.permanente
+  - pattern: '^diferido$'
+    side: ativo
+    line_id: bp.ativo.permanente.diferido
+
+  # ---- Imobilizado / RLP additions --------------------------------------------
+  - pattern: '^imoveis funcionais( vendidos)?$|^imoveis funcionais$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.imoveis_funcionais
+  - pattern: '^outras aplicacoes\s*[–-]?\s*vjora$|^outras aplicacoes vjora$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.outras_aplicacoes_vjora
+  - pattern: '^correiospar$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.investimentos.correiospar
+  - pattern: '^propriedades para investimento(s)?$|^imoveis mantidos para investimento$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.propriedades_investimento
+  - pattern: '^museu correios$|^museu$|^acervo museologico$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.museu
+  # Right-of-use depreciation breakdown (separate from accumulated depreciation).
+  - pattern: '^\(-\) depreciac(a|i)o de imoveis de direito de uso$|^\(-\) depreciac(a|i)o de bens de direito de uso$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.imobilizado.bens_direito_uso.depreciacao
+  # Generic "outros" trapped to the appropriate section.
+  - pattern: '^outros$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.outros
+    where: 'parent_section == "realizavel_longo_prazo"'
+  - pattern: '^outros$'
+    side: ativo
+    line_id: bp.ativo.circulante.outros_valores_e_bens
+    where: 'parent_section == "circulante"'
+
+  # ---- PASSIVO additions ------------------------------------------------------
+  # Convênio Postal Saúde appears on either side of circulante in 2014-2019.
+  - pattern: '^convenio postal saude$'
+    side: passivo
+    line_id: bp.passivo.circulante.convenio_saude
+    where: 'parent_section == "circulante"'
+  # Obrigações financeiras a pagar — separate from empréstimos in 2014-2019 BPs.
+  - pattern: '^obrigacoes financeiras a pagar$'
+    side: passivo
+    line_id: bp.passivo.circulante.obrigacoes_financeiras
+    where: 'parent_section == "circulante"'
+  - pattern: '^obrigacoes financeiras a pagar$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.obrigacoes_financeiras
+    where: 'parent_section == "nao_circulante"'
+  # Right-of-use liability — the "Passivo por direito de uso" published as a
+  # separate row from "Arrendamento". Both map to the IFRS 16 lease liability.
+  - pattern: '^passivo por direito de uso$|^passivo de direito de uso$'
+    side: passivo
+    line_id: bp.passivo.circulante.passivo_direito_uso
+    where: 'parent_section == "circulante"'
+  - pattern: '^passivo por direito de uso$|^passivo de direito de uso$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.passivo_direito_uso
+    where: 'parent_section == "nao_circulante"'
+  # Outros débitos (CP) — older layouts.
+  - pattern: '^outros debitos$'
+    side: passivo
+    line_id: bp.passivo.circulante.outros_debitos
+    where: 'parent_section == "circulante"'
+  - pattern: '^outros debitos$|^outros$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.outros
+    where: 'parent_section == "nao_circulante"'
+  # Resultados de exercícios futuros (BR-GAAP only).
+  - pattern: '^resultados de exercicios futuros$'
+    side: passivo
+    line_id: bp.passivo.resultados_exercicios_futuros
+
+  # ---- Patrimônio Líquido additions ------------------------------------------
+  - pattern: '^adiantamento(s)? para futuro aumento de capital(\s*[–-]\s*afac)?$|^afac$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.afac
+  - pattern: '^custo atribuido(\s*-\s*bens em uso)?$|^aap\s*-\s*bens em uso$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.aap.bens_em_uso
+  - pattern: '^custo atribuido\s*-\s*bens mantidos para venda$|^aap\s*-\s*bens mantidos para venda$|^custo atribuido\s*-\s*bens mantidos para$'
+    side: passivo
+    line_id: bp.patrimonio_liquido.aap.bens_mantidos_venda
+
+  # ---- BP fallbacks for plain alias labels ------------------------------------
+  # "Adiantamentos" plain (sub-CP) — matches when label is just the word.
+  - pattern: '^adiantamentos diversos$'
+    side: ativo
+    line_id: bp.ativo.circulante.adiantamentos_diversos
+    where: 'parent_section == "circulante"'
+
+  # Empréstimos e financiamentos — when section walker hasn't tagged
+  # circulante/nao_circulante yet (early in passivo before the header line),
+  # the strict "where" clause fails. Add unconstrained fallbacks.
+  - pattern: '^emprestimos e financiamentos$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.emprestimos
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^valores a compensar$|^tributos compensados$|^impostos a compensar$'
+    side: ativo
+    line_id: bp.ativo.nao_circulante.realizavel_longo_prazo.tributos_a_compensar
+    where: 'parent_section == "realizavel_longo_prazo" or parent_section == "nao_circulante"'
+  # 2014 misclassifies "Tributos Compensados" onto the passivo side. Add a
+  # passivo-side rule that maps to the same logical line so the figure is
+  # captured (it's still a tax-recoverable balance, signed appropriately
+  # downstream).
+  - pattern: '^tributos compensados$'
+    side: passivo
+    line_id: bp.passivo.circulante.outros_debitos
+  - pattern: '^contas a pagar internacionais$'
+    side: passivo
+    line_id: bp.passivo.circulante.contas_internacionais
+    where: 'parent_section == "circulante"'
+  - pattern: '^contas a pagar internacionais$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.contas_internacionais
+    where: 'parent_section == "nao_circulante"'
+  # Sometimes the parser misclassifies a passivo line onto the ativo side.
+  # Rather than silently lose the value, route it to the closest ativo
+  # bucket (outros valores e bens). Only triggers if the BP side-walker
+  # placed it on ativo.
+  - pattern: '^outros debitos$'
+    side: ativo
+    line_id: bp.ativo.circulante.outros_valores_e_bens
+    where: 'parent_section == "circulante"'
+  - pattern: '^provisoes( para contingencias)?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.processos_judiciais
+    where: 'parent_section == "nao_circulante"'
+  - pattern: '^provisoes( para contingencias)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.processos_judiciais
+    where: 'parent_section == "circulante"'
+  - pattern: '^receitas recebidas$|^receitas a apropriar$|^adiantamentos? de clientes( e receitas a apropriar)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.adiantamentos_clientes
+    where: 'parent_section == "circulante"'
+  - pattern: '^participac(a|i)o nos lucros$|^participac(a|i)o nos lucros e resultados( . plr e rva| - plr/rva|.*)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.participacao_lucros
+  # Postalis "Apropriação por competência - patrocinadas/mantidas" — appears
+  # nested inside benefícios pós-emprego (LP) on the passivo side as a
+  # break-down of the actuarial obligation by sponsor.
+  - pattern: '^apropriac(a|i)o por competencia.*patrocinadas?(/| ou )?mantidas?$|^apropriac(a|i)o por competencia.*$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.beneficios_pos_emprego
+  - pattern: '^obrigacoes? trabalhistas?( -? ifd)?$|^incentivo financeiro diferido( -? ifd)?$'
+    side: passivo
+    line_id: bp.passivo.circulante.outros
+    where: 'parent_section == "circulante"'
+  # 2014-style "Imóveis Funcionais Vendidos" sometimes shows up on the
+  # passivo side too (rare). Add a fallback that doesn't require side.
+  # Outros débitos / Outras obrigações on circulante (passivo).
+  - pattern: '^outros debitos$|^outras obrigacoes$'
+    side: passivo
+    line_id: bp.passivo.circulante.outros_debitos
+    where: 'parent_section == "circulante"'
+  # 2019-style: Remensuração printed inside the passivo nao_circulante
+  # benefits section (note disclosure detail).
+  - pattern: '^remensurac(a|i)o de obrigac(o|oe)es de beneficios?( pos-?emprego)?$'
+    side: passivo
+    line_id: bp.passivo.nao_circulante.beneficios_pos_emprego
+    where: 'parent_section == "nao_circulante"'

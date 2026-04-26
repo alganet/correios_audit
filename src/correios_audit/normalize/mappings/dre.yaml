@@ -1,0 +1,117 @@
+# DRE label → canonical line_id mappings.
+#
+# Each entry is matched against the raw label after normalize_label
+# (lowercase, accent-stripped, whitespace-collapsed). Patterns are Python
+# regex, anchored ^...$. The first matching rule wins.
+#
+# `years`: optional [from, to]. Used to scope rules to a specific reporting era
+# (e.g., a label that exists only post-IFRS).
+#
+# `side`: optional, BP-only ("ativo" | "passivo"). Mapping rules in dre.yaml
+# typically don't set it.
+
+rules:
+  - pattern: '^receita liquida( de vendas e servicos)?$'
+    line_id: dre.receita_liquida
+  - pattern: '^receita operacional bruta$'
+    line_id: dre.receita_bruta
+  - pattern: '^deducoes( da receita bruta| da receita operacional bruta)?$'
+    line_id: dre.deducoes
+  - pattern: '^custo dos (produtos vendidos e dos )?servicos( prestados)?( e dos servicos prestados| e produtos vendidos)?$|^custos? dos servicos( prestados)?( e produtos vendidos)?$'
+    line_id: dre.cpv
+  - pattern: '^lucro bruto$'
+    line_id: dre.lucro_bruto
+  - pattern: '^despesas com vendas[/-]?servicos$|^despesas comerciais$|^despesas de vendas$'
+    line_id: dre.despesas_vendas
+  - pattern: '^despesas (gerais e )?administrativas$'
+    line_id: dre.despesas_administrativas
+  - pattern: '^outras receitas operacionais$'
+    line_id: dre.outras_receitas_operacionais
+  - pattern: '^outras despesas operacionais$'
+    line_id: dre.outras_despesas_operacionais
+  - pattern: '^lucro liquido antes do resultado financeiro$|^resultado operacional( antes do resultado financeiro)?$|^lucro operacional( antes do resultado financeiro)?$|^lucro liquido antes do resultado$|^resultado liquido antes do resultado financeiro$|^prejuizo liquido antes do resultado financeiro$'
+    line_id: dre.resultado_operacional
+  - pattern: '^receitas financeiras$'
+    line_id: dre.receitas_financeiras
+  - pattern: '^despesas financeiras$'
+    line_id: dre.despesas_financeiras
+  - pattern: '^resultado financeiro$'
+    line_id: dre.resultado_financeiro
+  - pattern: '^resultado antes (dos|do) (tributos|impostos)( sobre o lucro)?$|^lucro antes (dos|do) (tributos|impostos)( sobre o lucro)?$|^resultado antes dos tributos sobre o( lucro)?$|^prejuizo antes (dos|do) (tributos|impostos)( sobre o lucro)?$'
+    line_id: dre.resultado_antes_ir
+  - pattern: '^tributos sobre o lucro$|^imposto de renda e contribuicao social( sobre o lucro)?$|^irpj( e | / )?csll$'
+    line_id: dre.tributos_sobre_lucro
+  - pattern: '^resultado liquido do (periodo|exercicio)$|^prejuizo (liquido )?do (periodo|exercicio)$|^lucro (liquido )?do (periodo|exercicio)$'
+    line_id: dre.resultado_liquido
+  - pattern: '^resultado de participac(a|i)o em controlada$|^resultado de participac(a|i)o em$|^equivalencia patrimonial$'
+    line_id: dre.resultado_participacao_controlada
+  - pattern: '^correntes$|^imposto de renda corrente$|^csll corrente$|^tributos correntes$'
+    line_id: dre.tributos_sobre_lucro.correntes
+  - pattern: '^diferidos$|^imposto de renda diferido$|^csll diferida$|^tributos diferidos$'
+    line_id: dre.tributos_sobre_lucro.diferidos
+
+  # ---- BR-GAAP / pre-2010 DRE -------------------------------------------------
+  # Older Correios DREs use BR-GAAP labels distinct from IFRS. We map them to
+  # the closest canonical concept; legacy-only lines (e.g., "Provisão para
+  # imposto de renda") have their own line_ids inside dre.tributos_sobre_lucro.
+  - pattern: '^receita liquida de vendas e servicos$|^receita operacional liquida$'
+    line_id: dre.receita_liquida
+  - pattern: '^receita bruta( de vendas e servicos)?$'
+    line_id: dre.receita_bruta
+  - pattern: '^impostos e abatimentos sobre a receita$|^impostos e contribuicoes$'
+    line_id: dre.deducoes.impostos
+  - pattern: '^receitas canceladas$|^abatimentos$'
+    line_id: dre.deducoes.canceladas
+  - pattern: '^lucro bruto$|^lucro operacional bruto$'
+    line_id: dre.lucro_bruto
+  - pattern: '^lucro operacional liquido$'
+    line_id: dre.lucro_operacional_liquido
+  - pattern: '^receitas operacionais$'
+    line_id: dre.receitas_operacionais
+  - pattern: '^despesas operacionais$'
+    line_id: dre.despesas_operacionais
+  - pattern: '^outras receitas e despesas operacionais$|^outras receitas \(despesas\) operacionais$'
+    line_id: dre.outras_receitas_operacionais
+  - pattern: '^outras receitas \(despesas\) nao-operacionais$|^receitas \(despesas\) nao-operacionais$'
+    line_id: dre.despesas_nao_operacionais
+  - pattern: '^receitas nao-operacionais$|^receitas nao operacionais$'
+    line_id: dre.receitas_nao_operacionais
+  - pattern: '^despesas nao-operacionais$|^despesas nao operacionais$'
+    line_id: dre.despesas_nao_operacionais
+  # Despesas operacionais sub-rows in older DREs (vendas / gerais e admin /
+  # financeiras / depreciação) — match within the despesas_operacionais block.
+  - pattern: '^vendas$'
+    line_id: dre.despesas_vendas
+  - pattern: '^administrativas$|^gerais e administrativas$'
+    line_id: dre.despesas_administrativas
+  - pattern: '^financeiras$'
+    line_id: dre.receitas_financeiras
+    where: 'parent_section == "" or parent_section == "receitas_operacionais"'
+  - pattern: '^despesas de depreciac(a|i)o e amortizac(a|i)o$|^depreciacao e amortizacao$'
+    line_id: dre.despesas_administrativas.depreciacao_amortizacao
+  - pattern: '^encargos financeiros liquidos$'
+    line_id: dre.resultado_financeiro
+  - pattern: '^resultado antes (das|de) provisoes$'
+    line_id: dre.resultado_antes_provisoes
+  - pattern: '^provisoes$'
+    line_id: dre.provisoes
+  - pattern: '^provisao para imposto de renda$|^imposto de renda$'
+    line_id: dre.tributos_sobre_lucro.irpj
+  - pattern: '^provisao para a contribuicao social$|^contribuicao social$|^provisao para contribuicao social$'
+    line_id: dre.tributos_sobre_lucro.csll
+  - pattern: '^imposto de renda e contribuicao social a pagar$'
+    line_id: dre.tributos_sobre_lucro
+  - pattern: '^resultado antes (do|dos) imposto(s)? de renda e contribuicao social$|^resultado antes (do|dos) tributos e participac(o|oe)es$'
+    line_id: dre.resultado_antes_ir
+  - pattern: '^resultado antes da participac(a|i)o nos lucros e resultados$'
+    line_id: dre.resultado_antes_plr
+  - pattern: '^participac(a|i)o nos lucros e resultados( - plr)?$|^plr$|^plr e rva$'
+    line_id: dre.participacao_lucros
+  - pattern: '^resultado antes dos juros s/capital proprio$|^resultado antes (do|dos) juros sobre (o )?capital proprio$'
+    line_id: dre.resultado_antes_jcp
+  - pattern: '^reversao dos juros s/capital proprio( - jcp)?$|^reversao (de|dos) juros sobre (o )?capital proprio$'
+    line_id: dre.reversao_jcp
+  - pattern: '^juros sobre (o )?capital proprio( - jcp)?$|^jcp$'
+    line_id: dre.juros_capital_proprio
+  - pattern: '^lucro liquido do exercicio$|^lucro/prejuizo liquido do exercicio$|^prejuizo liquido do exercicio$|^resultado do periodo$'
+    line_id: dre.resultado_liquido

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Anos cobertos</h1>
+<table class="financial">
+  <thead>
+    <tr>
+      <th class="num">Ano</th>
+      <th class="num">Receita líquida</th>
+      <th class="num">Resultado líquido</th>
+      <th class="num">PL</th>
+      <th class="num">Caixa fim</th>
+      <th class="num">Postalis (LP)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="year/{{ r.year }}.html">{{ r.year }}</a></td>
+      <td class="num">{{ r.receita | format_num_or_dash }}</td>
+      <td class="num {% if r.resultado is not none and r.resultado < 0 %}neg{% endif %}">{{ r.resultado | format_num_or_dash }}</td>
+      <td class="num {% if r.pl is not none and r.pl < 0 %}neg{% endif %}">{{ r.pl | format_num_or_dash }}</td>
+      <td class="num">{{ r.caixa | format_num_or_dash }}</td>
+      <td class="num">{{ r.postalis | format_num_or_dash }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

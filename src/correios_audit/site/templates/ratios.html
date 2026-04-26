@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Indicadores</h1>
+<p class="lede">
+  Indicadores derivados das demonstrações: margens, liquidez e crescimento.
+  Calculados ano a ano a partir das séries da DRE e do BP.
+</p>
+
+{% if coverage_notes %}
+<aside class="coverage">
+  <strong>Cobertura dos indicadores:</strong>
+  <ul>
+  {% for note in coverage_notes %}
+    <li>{{ note }}</li>
+  {% endfor %}
+  </ul>
+  <p class="muted-tight">
+    Indicadores derivados ficam ausentes quando uma das pontas (numerador ou
+    denominador) não foi extraída para o ano. As colunas com borda mais escura
+    sinalizam transições de regime — a comparação entre os lados pode não ser
+    direta.
+  </p>
+</aside>
+{% endif %}
+
+<div class="scroll-x">
+<table class="financial">
+  <thead>
+    <tr>
+      <th class="label">Indicador</th>
+      {% for y in years %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <th class="num{% if transition %} transition{% endif %}"
+            {% if transition %}title="{{ transition.long_text }}"{% endif %}>
+          {{ y }}{% if transition %} <span class="tmark">▎</span>{% endif %}
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td class="label">{{ row.label }}</td>
+      {% for y in years %}
+        {% set v = row["values"][loop.index0] %}
+        {% set transition = transition_years | selectattr('year', 'eq', y) | first %}
+        <td class="num{% if v is not none and v < 0 %} neg{% endif %}{% if transition %} transition{% endif %}">
+          {% if v is none %}—
+          {% elif row.fmt == "pct" %}{{ "%.1f"|format(v) }}%
+          {% elif row.fmt == "growth" %}{{ "%+.1f"|format(v) }}%
+          {% else %}{{ "%.2f"|format(v) }}
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

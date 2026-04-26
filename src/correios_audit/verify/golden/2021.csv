@@ -1,0 +1,12 @@
+line_id,period_year,value
+dre.receita_liquida,2021,21305.101
+dre.cpv,2021,-15869.958
+dre.lucro_bruto,2021,5435.143
+dre.resultado_liquido,2021,2276.469
+bp.ativo.total,2021,17713.852
+bp.passivo.total,2021,17713.852
+bp.patrimonio_liquido.capital,2021,3403.458
+bp.passivo.nao_circulante.beneficios_pos_emprego,2021,6901.105
+bp.ativo.nao_circulante.imobilizado,2021,6775.299
+dfc.caixa_fim,2021,914.256
+dfc.op.recursos_liquidos,2021,3938.431

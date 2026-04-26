@@ -1,0 +1,12 @@
+line_id,period_year,value
+dre.receita_liquida,2019,18356.077
+dre.cpv,2019,-15635.870
+dre.lucro_bruto,2019,2720.207
+dre.resultado_liquido,2019,102.121
+bp.ativo.total,2019,14235.485
+bp.passivo.total,2019,14235.485
+bp.patrimonio_liquido.capital,2019,3382.514
+bp.passivo.nao_circulante.beneficios_pos_emprego,2019,6650.803
+bp.ativo.nao_circulante.imobilizado,2019,7476.642
+dfc.caixa_fim,2019,13.144
+dfc.caixa_inicio,2019,83.758

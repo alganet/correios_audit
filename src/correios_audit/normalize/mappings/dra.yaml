@@ -1,0 +1,29 @@
+# Demonstração do Resultado Abrangente (DRA) — post-2010 only.
+
+rules:
+  - pattern: '^resultado liquido do (periodo|exercicio)$'
+    line_id: dra.resultado_liquido
+  - pattern: '^itens que nao serao reclassificados( para o resultado)?$'
+    line_id: dra.itens_nao_reclassificaveis
+  - pattern: '^remensurac(a|i)o de obrigac(o|oe)es? de beneficios?[\s-]*pos[\s-]?emprego$|^remensurac(a|i)o de obrigac(o|oe)es? de beneficios?( pos-?)?( emprego)?$|^aumento/reduc(a|i)o da remensurac(a|i)o de obrigac(o|oe)es de beneficios? pos-?emprego$|^remensurac(a|i)o de obrigac(o|oe)es de beneficio pos-?emprego$'
+    line_id: dra.itens_nao_reclassificaveis.beneficios_pos_emprego
+  - pattern: '^csll diferida da remensurac(a|i)o de obrigacoes? de$|^csll diferida da remensurac(a|i)o.*$|^aumento/reduc(a|i)o do imposto de renda relacionado.*$'
+    line_id: dra.itens_nao_reclassificaveis.csll_remensuracao
+  - pattern: '^investimentos patrimoniais vjora.*$|^ganho/perda em investimentos.*$|^investimentos patrimoniais.*valor justo.*$'
+    line_id: dra.itens_nao_reclassificaveis.investimentos_vjora
+  - pattern: '^ganho - valor justo - propriedades para investimento$|^realizac(a|i)o do ganho pela venda de imovel$|^propriedades para investimento.*valor justo$'
+    line_id: dra.itens_nao_reclassificaveis.imoveis
+  - pattern: '^csll diferida$|^csll diferida -? valor justo.*$|^csll diferida -? imoveis.*$|^csll diferida -? investimentos.*$'
+    line_id: dra.itens_nao_reclassificaveis.csll_diferida
+  - pattern: '^itens que serao reclassificados( para o resultado)?$'
+    line_id: dra.itens_reclassificaveis
+  - pattern: '^resultado abrangente total do (periodo|exercicio)$|^resultado abrangente do exercicio$'
+    line_id: dra.resultado_abrangente_total
+  - pattern: '^itens que (podem|poderao) ser subsequentemente reclassificados.*$'
+    line_id: dra.itens_reclassificaveis
+  - pattern: '^csll diferida (\(2\.217\)|da variac(a|i)o do valor justo|\s*-\s*ganho\s*-\s*propriedades para investimento$)|^csll diferida\s*-\s*ganho\s*-\s*propriedades para$'
+    line_id: dra.itens_nao_reclassificaveis.csll_diferida
+  - pattern: '^ganho a valor justo\s*[–-]\s*propriedades para investimento$|^ganho\s*[–-]\s*valor justo\s*[–-]\s*propriedades para investimento$'
+    line_id: dra.itens_nao_reclassificaveis.imoveis
+  - pattern: '^aumento/reduc(a|i)o em outros resultados abrangentes$'
+    line_id: dra.itens_reclassificaveis
