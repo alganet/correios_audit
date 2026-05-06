@@ -188,7 +188,11 @@ rules:
     side: passivo
     line_id: bp.passivo.circulante.contas_internacionais
     where: 'parent_section == "circulante"'
-  - pattern: '^beneficios a empregados$|^salarios e encargos sociais$|^obrigacoes trabalhistas$|^pessoal e encargos sociais$'
+  # 2017+ vintages publish multiple sub-rows that all roll up into the
+  # "Benefícios a empregados" aggregate (CP). The trailing "- ifd" suffix
+  # appears in 2021+ vintages ("Obrigações trabalhistas - IFD"); accept it
+  # so the row routes to the aggregate instead of falling to "outros".
+  - pattern: '^beneficios a empregados$|^salarios e encargos sociais$|^obrigacoes trabalhistas( - ifd)?$|^pessoal e encargos sociais$|^beneficio pos.?emprego$'
     side: passivo
     line_id: bp.passivo.circulante.beneficios_a_empregados
     where: 'parent_section == "circulante"'
@@ -198,7 +202,11 @@ rules:
   - pattern: '^arrecadacoes e recebimentos$'
     side: passivo
     line_id: bp.passivo.circulante.arrecadacoes_recebimentos
-  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$|^receitas a apropriar$'
+  # 2014 BP prints "Receitas Recebidas\nAntecipadamente" across two lines;
+  # the parser collects only the first line ("Receitas Recebidas") before
+  # the value tokens. Accept the truncated form too — semantically the
+  # same as "receitas a apropriar" (deferred income).
+  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$|^receitas a apropriar$|^receitas recebidas( antecipadamente)?$'
     side: passivo
     line_id: bp.passivo.circulante.adiantamentos_clientes
     where: 'parent_section == "circulante"'
@@ -234,7 +242,7 @@ rules:
     side: passivo
     line_id: bp.passivo.nao_circulante.contas_internacionais
     where: 'parent_section == "nao_circulante"'
-  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$'
+  - pattern: '^adiantamentos de clientes( e receitas a apropriar)?$|^receitas recebidas( antecipadamente)?$|^receitas a apropriar$'
     side: passivo
     line_id: bp.passivo.nao_circulante.adiantamentos_clientes
     where: 'parent_section == "nao_circulante"'
@@ -482,7 +490,7 @@ rules:
   # break-down of the actuarial obligation by sponsor.
   - pattern: '^apropriac(a|i)o por competencia.*patrocinadas?(/| ou )?mantidas?$|^apropriac(a|i)o por competencia.*$'
     side: passivo
-    line_id: bp.passivo.nao_circulante.beneficios_pos_emprego
+    line_id: bp.passivo.nao_circulante.beneficios_pos_emprego.apropriacao
   - pattern: '^obrigacoes? trabalhistas?( -? ifd)?$|^incentivo financeiro diferido( -? ifd)?$'
     side: passivo
     line_id: bp.passivo.circulante.outros

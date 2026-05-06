@@ -1,0 +1,46 @@
+source: "Demonstrações Financeiras de 2003"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2003/demonstracoes-financeiras-de-2003"
+sha256: "e18839349e743d5f7404c88773f5e640feb3b219fc21b134912fe686b7318bae"
+vintage_year: 2003
+# 2003 brochure prints values in raw R$ (no scale label); _DOC_SCALES[2003]=1.0.
+currency_unit: units
+page: 1
+notes: |
+  Brochure-style 2-column layout (ATIVO/PASSIVO side-by-side). Headlines
+  hand-keyed from the source PDF; per-line mapping is unreliable due to
+  parser column-bleed.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2003-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2003
+    period_kind: fy
+    value: 4451317263.76
+    source_page: 1
+    source_quote: "T O T A L  4.451.317.263,76  4.159.071.396,73"
+  - line_id: bp.passivo.total
+    period_year: 2003
+    period_kind: fy
+    value: 4451317263.76
+    source_page: 1
+    source_quote: "T O T A L  4.451.317.263,76  4.159.071.396,73"
+  - line_id: dre.receita_liquida
+    period_year: 2003
+    period_kind: fy
+    value: 5612746850.21
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  5.612.746.850,21  5.173.775.546,22"
+  - line_id: dre.cpv
+    period_year: 2003
+    period_kind: fy
+    value: -3791339628.81
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (3.791.339.628,81)  (3.342.416.818,32)"
+  - line_id: dre.resultado_liquido
+    period_year: 2003
+    period_kind: fy
+    value: 288210258.45
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  288.210.258,45  406.069.709,43"

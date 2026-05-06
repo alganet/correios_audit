@@ -125,6 +125,13 @@ BP_LINES: tuple[Line, ...] = (
     Line("bp.passivo.nao_circulante.beneficios_pos_emprego", "bp",
          "Benefícios pós-emprego (Postalis e saúde)",
          parent="bp.passivo.nao_circulante"),
+    # Sub-detail: the apportionment-by-sponsor breakdown of the actuarial
+    # obligation. Some annuals (2017, 2019+) print this as its own row
+    # nested under benefícios pós-emprego — keeping it separate avoids
+    # double-counting the same liability into the parent total.
+    Line("bp.passivo.nao_circulante.beneficios_pos_emprego.apropriacao", "bp",
+         "Apropriação por competência (patrocinadas/mantidas)",
+         parent="bp.passivo.nao_circulante.beneficios_pos_emprego"),
     Line("bp.passivo.nao_circulante.tributos_diferidos", "bp",
          "Tributos diferidos (LP)", parent="bp.passivo.nao_circulante"),
     Line("bp.passivo.nao_circulante.processos_judiciais", "bp",
@@ -223,6 +230,17 @@ DFC_LINES: tuple[Line, ...] = (
     Line("dfc.fin.amortizacoes", "dfc",
          "Amortizações de empréstimos (principal+juros)",
          parent="dfc.atividades_financiamento", sign="-"),
+    # Some DFCs (notably 2017, 2018 quarterly) publish a single net row
+    # "Empréstimos e Financiamentos" inside Atividades de Financiamento
+    # without further sub-decomposition into Captação/Amortização. Its sign
+    # depends on the period (positive when net inflow, negative when net
+    # outflow), so we keep sign='any' here.
+    Line("dfc.fin.emprestimos_net", "dfc",
+         "Empréstimos e financiamentos (net)",
+         parent="dfc.atividades_financiamento"),
+    Line("dfc.fin.dividendos_pagos", "dfc",
+         "Dividendos / JCP / Transferências para a União",
+         parent="dfc.atividades_financiamento", sign="-"),
     Line("dfc.fin.arrendamento", "dfc",
          "Pagamentos de arrendamento (principal+juros)",
          parent="dfc.atividades_financiamento", sign="-",
@@ -242,9 +260,16 @@ DFC_LINES: tuple[Line, ...] = (
 
 DVA_LINES: tuple[Line, ...] = (
     Line("dva.receitas", "dva", "Receitas", is_total=True),
-    Line("dva.insumos", "dva", "Insumos adquiridos de terceiros", sign="-", is_total=True),
+    # In the value-added construction these are subtractions, so the
+    # *equation* sign is negative. Publication convention varies though:
+    # 2008-2019 Correios DVAs print these as positive numbers (negative role
+    # is implied by row position), 2021+ DVAs print them parenthesised.
+    # We keep sign="any" here so the strict sign-convention check doesn't
+    # fail on years that publish them positive — chart formulas downstream
+    # know the role is "subtract".
+    Line("dva.insumos", "dva", "Insumos adquiridos de terceiros", is_total=True),
     Line("dva.va_bruto", "dva", "Valor adicionado bruto", is_total=True),
-    Line("dva.retencoes", "dva", "Retenções (depreciação/amortização)", sign="-"),
+    Line("dva.retencoes", "dva", "Retenções (depreciação/amortização)"),
     Line("dva.va_liquido", "dva",
          "Valor adicionado líquido produzido pela entidade", is_total=True),
     Line("dva.va_recebido_transferencia", "dva", "Valor adicionado recebido em transferência"),
@@ -316,6 +341,8 @@ DFC_EXTENDED_LINES: tuple[Line, ...] = (
          parent="dfc.op.mutacoes_patrimoniais"),
     Line("dfc.inv.imobilizado_baixas", "dfc",
          "Baixas de imobilizado", parent="dfc.atividades_investimento"),
+    Line("dfc.inv.intangivel_baixas", "dfc",
+         "Baixas de intangível", parent="dfc.atividades_investimento"),
     Line("dfc.inv.propriedades_investimento", "dfc",
          "Propriedades para investimento (adições/baixas)",
          parent="dfc.atividades_investimento"),
@@ -571,6 +598,15 @@ DRE_SUBITEM_LINES: tuple[Line, ...] = (
          "Receitas não-operacionais (BR-GAAP)", valid_to=2010),
     Line("dre.despesas_nao_operacionais", "dre",
          "Despesas não-operacionais (BR-GAAP)", sign="-", valid_to=2010),
+    # The 2001-2009 brochures often present a SINGLE combined line —
+    # "RECEITAS (DESPESAS) NÃO-OPERACIONAIS" — that is the NET of the two
+    # above, so the value can legitimately be positive or negative depending
+    # on the year. Keep it on its own line_id with sign='any' so the
+    # sign-convention check doesn't false-fail (e.g. 2002 reports
+    # +R$ 308M as the net).
+    Line("dre.resultado_nao_operacional", "dre",
+         "Resultado não-operacional (NET, BR-GAAP combined line)",
+         valid_to=2010),
     # Pre-IFRS provisões line (between resultado pre-tributos and tributos).
     Line("dre.provisoes", "dre",
          "Provisões (BR-GAAP)", valid_to=2010),

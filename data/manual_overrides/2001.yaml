@@ -1,0 +1,57 @@
+source: "Demonstrações Financeiras de 2001 (cross-referenced from 2002 brochure)"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2001/demonstracoes_contabeis-2001.pdf"
+sha256: "4bfe9e3ecb4f72acd8a57a7d30134ca40415c1733ac5f04e249c4e1f99ab6607"
+vintage_year: 2001
+# 2001 brochure prints raw R$. `_DOC_SCALES[2001]=1.0`.
+currency_unit: units
+page: 1
+notes: |
+  The 2001 PDF text layer is severely CID-corrupted (font subset issue) and
+  the OCR'd output fuses adjacent labels into multi-line garble (e.g.
+  "Lucros Acumulados Reservas de Lucros Reservas de Capital ..."). The
+  values themselves can be partially recovered but verification against a
+  verbatim quote isn't feasible from the 2001 PDF alone.
+
+  As an alternative, the 2002 brochure publishes a clean 2001 prior-period
+  column for both BP and DRE — that is what this YAML hand-keys, with the
+  source_quote citing the 2002 PDF (data/raw/pdfs/cc3f0c13...). The user
+  reading these figures can verify them against the 2002 brochure's
+  prior-period column, which is more legible than the 2001 source.
+
+  This is the same authority pattern accountants use when a prior period
+  is restated by a later annual.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2001-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2001
+    period_kind: fy
+    value: 3406191009.76
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (from 2002 brochure prior-period column; 2001 PDF text layer is CID-corrupted)"
+  - line_id: bp.passivo.total
+    period_year: 2001
+    period_kind: fy
+    value: 3406191009.76
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (from 2002 brochure prior-period column; 2001 PDF text layer is CID-corrupted)"
+  - line_id: dre.receita_liquida
+    period_year: 2001
+    period_kind: fy
+    value: 4546890463.39
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  5.173.775.546,22  4.546.890.463,39 (from 2002 brochure prior-period column)"
+  - line_id: dre.cpv
+    period_year: 2001
+    period_kind: fy
+    value: -2950129744.75
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (3.342.416.818,32)  (2.950.129.744,75) (from 2002 brochure prior-period column)"
+  - line_id: dre.resultado_liquido
+    period_year: 2001
+    period_kind: fy
+    value: 506712415.85
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  406.069.709,43  506.712.415,85 (from 2002 brochure prior-period column)"

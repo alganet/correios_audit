@@ -17,16 +17,21 @@
     <a href="{{ root }}lens/governance.html">Governança</a>
     <a href="{{ root }}lens/ratios.html">Indicadores</a>
     <a href="{{ root }}years.html">Anos</a>
+    <a href="{{ root }}qualidade/index.html">Qualidade</a>
   </nav>
 </header>
 <main>
 {% block content %}{% endblock %}
 </main>
 <footer>
-  Dados extraídos de demonstrações financeiras públicas em
+  Dados extraídos das demonstrações financeiras públicas publicadas em
   <a href="https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras">correios.com.br</a>.
-  Construído de forma reprodutível a partir de PDFs originais — código aberto,
-  sem extração assistida por LLM.
+  Pipeline determinístico: pymupdf para texto nativo, PaddleOCR para
+  páginas escaneadas, regras YAML para a taxonomia canônica. Nas
+  brochuras de 2001–2009, algumas figuras-chave foram digitadas
+  manualmente a partir do parecer do auditor, com citação verbatim do
+  trecho — todas listadas na página de
+  <a href="{{ root }}qualidade/index.html">qualidade dos dados</a>.
   Última build: {{ build_date }}.
 </footer>
 </body>

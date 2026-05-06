@@ -1,0 +1,43 @@
+source: "Demonstrações Financeiras de 2007"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2007/demonstracoes-financeiras-de-2007"
+sha256: "e9b0410345ad8ec56bcd693e46f088a7ec612f9117d38383e048e92a47e6be42"
+vintage_year: 2007
+currency_unit: units
+page: 1
+notes: |
+  Brochure layout — headlines hand-keyed from the source PDF.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2007-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2007
+    period_kind: fy
+    value: 6282888691.58
+    source_page: 1
+    source_quote: "T O T A L  6.282.888.691,58  5.729.285.633,23"
+  - line_id: bp.passivo.total
+    period_year: 2007
+    period_kind: fy
+    value: 6282888691.58
+    source_page: 1
+    source_quote: "T O T A L  6.282.888.691,58  5.729.285.633,23"
+  - line_id: dre.receita_liquida
+    period_year: 2007
+    period_kind: fy
+    value: 9316234097.19
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  9.316.234.097,19  8.493.388.931,41"
+  - line_id: dre.cpv
+    period_year: 2007
+    period_kind: fy
+    value: -6604396744.96
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (6.604.396.744,96)  (6.231.827.867,91)"
+  - line_id: dre.resultado_liquido
+    period_year: 2007
+    period_kind: fy
+    value: 829235017.87
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  829.235.017,87  526.906.396,24"

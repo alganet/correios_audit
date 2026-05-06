@@ -18,32 +18,64 @@ from correios_audit.parse.statement import StatementParse, parse_simple_statemen
 
 
 def _find_split_x(page: dict, header_idx: int, header_end: int) -> float | None:
-    """Side-by-side BPs (modern annuals) have ATIVO and PASSIVO on the SAME
-    header line. We only split in that case. Single-side pages (older
-    annuals, all quarterlies) carry "ATIVO" or "PASSIVO" only in the page
-    title — we must not split those, otherwise the only "PASSIVO" word on
-    the page is the title and the split_x ends up at the title's x position."""
-    for i in range(header_idx, header_end + 1):
+    """Side-by-side BPs put ATIVO and PASSIVO on the same line, but that line
+    is often *above* the date-header line by a few rows (brochure-era 2001-2009
+    use one row for `ATIVO PASSIVO` and the next for `2001 2000`). Search the
+    header zone a few lines back, not just the date row.
+
+    The two labels must be visually separated (>50 pt) — a single-side title
+    like `BALANÇO PATRIMONIAL — ATIVO E PASSIVO` would also match find_word
+    for both names but the words sit adjacent.
+    """
+    look_back = 8
+    start = max(0, header_idx - look_back)
+    end = min(len(page["lines"]), header_end + 2)
+    for i in range(start, end):
         line = page["lines"][i]
         ativo = find_word(line, "ATIVO")
         passivo = find_word(line, "PASSIVO")
         if ativo is not None and passivo is not None:
-            return passivo.x0 - 2.0
-    # No ambiguity: side-by-side requires both labels co-located.
+            if abs(ativo.x_center - passivo.x_center) > 50:
+                return passivo.x0 - 2.0
     return None
 
 
 def _detect_single_side(page: dict) -> str | None:
-    """For single-side BP layouts (older quarterlies), the page title carries
-    'BALANÇO PATRIMONIAL - ATIVO' or '- PASSIVO'. Older annuals just have
-    'ATIVO' or 'PASSIVO E PATRIMÔNIO LÍQUIDO' as a column header label."""
-    head_text = " ".join(
-        " ".join(w[2] for w in line["words"])
-        for line in page["lines"][:8]
-    ).upper()
-    if "PASSIVO" in head_text or "PATRIMÔNIO LÍQUIDO" in head_text or "PATRIMONIO LIQUIDO" in head_text:
+    """Single-side BP layouts (older quarterlies, occasional brochures): the
+    page title carries 'BALANÇO PATRIMONIAL - ATIVO' or '- PASSIVO E
+    PATRIMÔNIO LÍQUIDO'.
+
+    Disambiguation rules:
+    - Inspect each of the first 8 lines individually (not concatenated text),
+      so a brochure title 'ATIVO E PASSIVO' on one line is treated as a
+      side-by-side hint, not a passivo single-side page.
+    - If a line contains BOTH 'ATIVO' and 'PASSIVO', it's a side-by-side
+      header — return None so parse_bp_page falls into the split path.
+    - If we see only 'PASSIVO' (and 'PATRIMÔNIO'/'LÍQUIDO'-like terms),
+      single-side passivo.
+    - If we see only 'ATIVO', single-side ativo.
+    - Mixed across separate lines: ambiguous; return None and let the
+      apply.py BP-side walker infer per row.
+    """
+    saw_ativo = False
+    saw_passivo = False
+    for line in page["lines"][:8]:
+        text = " ".join(w[2] for w in line["words"]).upper()
+        line_ativo = "ATIVO" in text
+        line_passivo = (
+            "PASSIVO" in text
+            or "PATRIMÔNIO LÍQUIDO" in text
+            or "PATRIMONIO LIQUIDO" in text
+        )
+        if line_ativo and line_passivo:
+            return None
+        saw_ativo |= line_ativo
+        saw_passivo |= line_passivo
+    if saw_ativo and saw_passivo:
+        return None
+    if saw_passivo:
         return "passivo"
-    if "ATIVO" in head_text:
+    if saw_ativo:
         return "ativo"
     return None
 

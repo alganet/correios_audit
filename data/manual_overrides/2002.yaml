@@ -1,0 +1,97 @@
+source: "Demonstrações Financeiras de 2002"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2002/demonstracoes-financeiras-de-2002"
+sha256: "cc3f0c13b1129f87391a21692f801f42636b05c1e5b7c56b893fb4eebaf4a5e2"
+vintage_year: 2002
+# Brochure prints values in full reais (no scale label), so unit=`units`.
+currency_unit: units
+page: 1
+notes: |
+  2002 brochure: 6-column wide BP layout (ATIVO label | 2002 | 2001 |
+  PASSIVO label | 2002 | 2001) and BR-GAAP DRE on page 2. The positional
+  parser fuses adjacent labels across the ATIVO/PASSIVO column gap, so
+  most line-level mappings are unreliable. Headlines below are hand-keyed
+  from the source PDF (data/raw/pdfs/cc3f0c13...) with verbatim quotes.
+
+# Brochure column-bleed makes per-line mapping unreliable; trust these
+# hand-keyed headline rows instead. See checks.py:_docs_satisfied_by_overrides.
+materiality_satisfied_by_overrides: true
+doc_id: 2002-fy-df
+
+rows:
+  # ─── Balance sheet 2002 (page 1) ────────────────────────────────────────
+  - line_id: bp.ativo.total
+    period_year: 2002
+    period_kind: fy
+    value: 4159071396.73
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (BP totals match — ativo == passivo)"
+  - line_id: bp.passivo.total
+    period_year: 2002
+    period_kind: fy
+    value: 4159071396.73
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (BP totals match — ativo == passivo)"
+  - line_id: bp.ativo.circulante.caixa_equivalentes
+    period_year: 2002
+    period_kind: fy
+    value: 850523628.18
+    source_page: 1
+    source_quote: "Disponível  850.523.628,18  1.011.391.220,84 (caixa+bancos+aplicações de curto prazo)"
+  - line_id: bp.patrimonio_liquido.capital
+    period_year: 2002
+    period_kind: fy
+    value: 1143668303.20
+    source_page: 1
+    source_quote: "Capital  1.143.668.303,20  597.151.170,79"
+
+  # ─── DRE 2002 (page 2) ──────────────────────────────────────────────────
+  - line_id: dre.receita_liquida
+    period_year: 2002
+    period_kind: fy
+    value: 5173775546.22
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  5.173.775.546,22  4.546.890.463,39"
+  - line_id: dre.cpv
+    period_year: 2002
+    period_kind: fy
+    value: -3342416818.32
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (3.342.416.818,32) (2.950.129.744,75)"
+  - line_id: dre.lucro_bruto
+    period_year: 2002
+    period_kind: fy
+    value: 1831358727.90
+    source_page: 2
+    source_quote: "LUCRO OPERACIONAL BRUTO  1.831.358.727,90  1.596.760.718,64"
+  - line_id: dre.resultado_liquido
+    period_year: 2002
+    period_kind: fy
+    value: 406069709.43
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  406.069.709,43  506.712.415,85"
+
+  # ─── Prior-period column (2001) — values published in this 2002 vintage ──
+  - line_id: bp.ativo.total
+    period_year: 2001
+    period_kind: fy
+    value: 3406191009.76
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (prior-period column)"
+  - line_id: bp.passivo.total
+    period_year: 2001
+    period_kind: fy
+    value: 3406191009.76
+    source_page: 1
+    source_quote: "T O T A L  4.159.071.396,73  3.406.191.009,76 (prior-period column)"
+  - line_id: dre.receita_liquida
+    period_year: 2001
+    period_kind: fy
+    value: 4546890463.39
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  5.173.775.546,22  4.546.890.463,39"
+  - line_id: dre.resultado_liquido
+    period_year: 2001
+    period_kind: fy
+    value: 506712415.85
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  406.069.709,43  506.712.415,85"

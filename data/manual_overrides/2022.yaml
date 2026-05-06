@@ -1,0 +1,72 @@
+source: "Demonstrações Contábeis Individuais 2022"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2022/demonstracoes-financeiras-de-2022"
+sha256: "(see manifest.jsonl for 2022-fy-df)"
+vintage_year: 2022
+currency_unit: thousands
+page: 3
+notes: |
+  Parser regression: 2022 PDF's BP/DRE/DFC were not extracted by the
+  positional parser (only DVA made it to canonical). Headlines below give
+  the verify layer something to anchor materiality + cross-foot against.
+  Followup: investigate why the parser produced only DVA rows for 2022.
+
+  The 2022 publication header reads "Em R$ milhares". Values are individual
+  (the publication is "Demonstrações Contábeis Individuais" — Correios
+  has no consolidated subsidiary in 2022 since Correiospar was liquidated).
+
+  One unmapped line ("Contribuição social" 180.3M) is a sub-detail of
+  tributos_sobre_lucro that needs a tightened mapping rule — opt out of
+  per-line materiality and rely on headlines.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2022-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2022
+    period_kind: fy
+    value: 17963040
+    source_page: 3
+    source_quote: "TOTAL DO ATIVO 17.963.040 17.713.852 14.323.933"
+  - line_id: bp.passivo.total
+    period_year: 2022
+    period_kind: fy
+    value: 17963040
+    source_page: 4
+    source_quote: "TOTAL DO ATIVO 17.963.040 17.713.852 14.323.933 (BP identity: passivo == ativo)"
+  - line_id: bp.ativo.circulante.caixa_equivalentes
+    period_year: 2022
+    period_kind: fy
+    value: 91202
+    source_page: 3
+    source_quote: "Caixa e equivalentes de caixa 5 91.202 87.670 568.174"
+  - line_id: bp.patrimonio_liquido.capital
+    period_year: 2022
+    period_kind: fy
+    value: 3403458
+    source_page: 4
+    source_quote: "Capital 19.1 3.403.458 3.403.458 3.403.458"
+  - line_id: dre.receita_liquida
+    period_year: 2022
+    period_kind: fy
+    value: 19813132
+    source_page: 5
+    source_quote: "Receita líquida de vendas e serviços 22.1 19.813.132 21.305.101 17.249.050"
+  - line_id: dre.cpv
+    period_year: 2022
+    period_kind: fy
+    value: -14453868
+    source_page: 5
+    source_quote: "Custo dos produtos vendidos e dos serviços prestados 22.2 (14.453.868) (13.664.911) (12.056.598)"
+  - line_id: dre.lucro_bruto
+    period_year: 2022
+    period_kind: fy
+    value: 5359264
+    source_page: 5
+    source_quote: "Lucro bruto 5.359.264 7.640.190 5.192.452"
+  - line_id: dre.resultado_liquido
+    period_year: 2022
+    period_kind: fy
+    value: -808781
+    source_page: 5
+    source_quote: "RESULTADO LÍQUIDO DO PERÍODO (808.781) 2.276.469 1.530.376"

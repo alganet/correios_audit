@@ -33,7 +33,10 @@ rules:
     line_id: dre.resultado_operacional
   - pattern: '^receitas financeiras$'
     line_id: dre.receitas_financeiras
-  - pattern: '^despesas financeiras$'
+  # Trailing " 0" / " 5" allowed: 2023-Q2 PDF prints a stray note-column
+  # digit after the label that survives `_TRAILING_NOTE_RE` (which only
+  # strips dotted note refs like "4.5.2", not bare single digits).
+  - pattern: '^despesas financeiras( \d)?$'
     line_id: dre.despesas_financeiras
   - pattern: '^resultado financeiro$'
     line_id: dre.resultado_financeiro
@@ -72,8 +75,13 @@ rules:
     line_id: dre.despesas_operacionais
   - pattern: '^outras receitas e despesas operacionais$|^outras receitas \(despesas\) operacionais$'
     line_id: dre.outras_receitas_operacionais
+  # 2001-2009 brochures collapse "Receitas Não-Operacionais" and
+  # "Despesas Não-Operacionais" into a single net line. That net can be
+  # positive or negative; route it to its own line_id (sign='any') so the
+  # sign-convention check doesn't false-fail. The split lines below remain
+  # for years that do separate them.
   - pattern: '^outras receitas \(despesas\) nao-operacionais$|^receitas \(despesas\) nao-operacionais$'
-    line_id: dre.despesas_nao_operacionais
+    line_id: dre.resultado_nao_operacional
   - pattern: '^receitas nao-operacionais$|^receitas nao operacionais$'
     line_id: dre.receitas_nao_operacionais
   - pattern: '^despesas nao-operacionais$|^despesas nao operacionais$'

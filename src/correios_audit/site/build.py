@@ -68,13 +68,14 @@ REGIME_TRANSITIONS: tuple[Transition, ...] = (
     ),
     Transition(
         year=2019,
-        short_label="IFRS 16 (leases)",
+        short_label="IFRS 16 (arrendamentos)",
         long_text=(
             "2019 — adoção do IFRS 16/CPC 06(R2). Operações de arrendamento "
-            "antes off-balance passam a ser reconhecidas como passivo de "
-            "direito de uso e contrapartida em ativo imobilizado. O salto em "
-            "imobilizado e em passivo neste ano é majoritariamente efeito "
-            "contábil, não desembolso de caixa novo."
+            "que antes ficavam fora do balanço passam a ser reconhecidas "
+            "como passivo de direito de uso, com contrapartida no ativo "
+            "imobilizado. O salto em imobilizado e em passivo neste ano é "
+            "predominantemente efeito contábil, não um desembolso de caixa "
+            "novo."
         ),
         line_id_prefixes=(
             "bp.passivo.circulante.arrendamento",
@@ -111,28 +112,32 @@ REGIME_TRANSITIONS: tuple[Transition, ...] = (
 # Per-statement coverage notes. Surfaced under tables that mix statements.
 COVERAGE_NOTES: dict[str, str] = {
     "dre": (
-        "Cobertura DRE: 2014 e 2018+ são completas; 2001–2013 e 2015–2017 "
-        "têm extração parcial (layouts BR-GAAP em brochuras escaneadas, "
-        "labels diferentes a cada ano). Linhas pré-2010 como reversão de JCP "
-        "e PLR pré-tributos não têm equivalente IFRS direto."
+        "Cobertura da DRE: 2014 e a partir de 2018 estão completas; "
+        "2001–2013 e 2015–2017 têm extração parcial (layouts BR-GAAP em "
+        "brochuras escaneadas, com rótulos que variam a cada ano). Linhas "
+        "pré-2010 como reversão de JCP e PLR pré-tributos não têm "
+        "equivalente IFRS direto."
     ),
     "dra": (
-        "DRA (Resultado Abrangente) introduzida pelo CPC 26 em 2010 — "
-        "antes disso essa demonstração não existia."
+        "DRA (Demonstração do Resultado Abrangente) foi introduzida pelo "
+        "CPC 26 em 2010 — antes disso essa demonstração não existia."
     ),
     "dfc": (
-        "DFC obrigatória só a partir de 2008 (Lei 11.638/2007). Antes "
-        "disso publicava-se a DOAR (Demonstração de Origens e Aplicações), "
-        "que não é diretamente convertível para o formato indireto da DFC."
+        "DFC é obrigatória apenas a partir de 2008 (Lei 11.638/2007). "
+        "Antes disso publicava-se a DOAR (Demonstração de Origens e "
+        "Aplicações de Recursos), que não é diretamente convertível para "
+        "o formato indireto da DFC."
     ),
     "dva": (
-        "DVA cobre 2006 em diante; anos OCR'd têm lacunas em sub-itens "
-        "(7.x trabalho, 8.x governo). Os totais por categoria são confiáveis."
+        "DVA cobre 2006 em diante; nos anos extraídos via OCR há lacunas "
+        "em sub-itens (7.x trabalho, 8.x governo), mas os totais por "
+        "categoria são confiáveis."
     ),
     "bp": (
-        "BP cobre todo o período mas com profundidade desigual: 2008–2024 "
-        "completo até a sub-categoria; 2001–2007 só níveis-cabeçalho (Total "
-        "Ativo, Permanente, Disponível) por causa do OCR de brochuras."
+        "BP cobre todo o período, mas com profundidade desigual: de 2008 "
+        "a 2024 chega ao nível das sub-categorias; em 2001–2007 só temos "
+        "os níveis-cabeçalho (Total do Ativo, Permanente, Disponível) "
+        "por conta do OCR de brochuras."
     ),
 }
 
@@ -329,11 +334,11 @@ def _chart(line_ids: list[tuple[str, str]], title: str, df: pd.DataFrame, *,
                 f"{series_labels[lid]} (anos {_format_year_list(ys)})"
             )
         disclaimers.append(
-            "Pontos ocultados por violarem a convenção de sinal canônica "
-            "(provável erro de OCR/desalinhamento de coluna em brochura "
+            "Pontos omitidos por violarem a convenção de sinal canônica "
+            "(provável erro de OCR ou desalinhamento de coluna em brochura "
             "escaneada): " + "; ".join(bad_lines)
-            + ". Os valores brutos seguem disponíveis na tabela e na página "
-            "do documento de origem."
+            + ". Os valores brutos continuam disponíveis na tabela e na "
+            "página do documento de origem."
         )
 
     return {
@@ -842,9 +847,10 @@ def main() -> int:
     (lens_dir / "profitability.html").write_text(render_lens(
         env, df, lens="profitability",
         title="Lucratividade & Operações",
-        description="Receita líquida, custos, despesas operacionais, resultado "
-                    "operacional e líquido. A análise mostra a estrutura completa "
-                    "do P&L (DRE) e do valor adicionado (DVA).",
+        description="Receita líquida, custos, despesas operacionais, "
+                    "resultado operacional e resultado líquido. Esta visão "
+                    "mostra a estrutura completa da DRE e da Demonstração "
+                    "do Valor Adicionado (DVA).",
         line_ids=[ln.line_id for ln in ALL_LINES if ln.statement in ("dre", "dra", "dva")],
         chart_groups=[
             ("c-receita", "Receita líquida vs custos (R$ bi)",
@@ -867,9 +873,10 @@ def main() -> int:
     (lens_dir / "balance_sheet.html").write_text(render_lens(
         env, df, lens="balance_sheet",
         title="Balanço Patrimonial",
-        description="Ativos, passivos e patrimônio líquido. A obrigação Postalis "
-                    "(benefícios pós-emprego) é a maior linha do passivo não "
-                    "circulante e o principal fator do PL negativo.",
+        description="Ativos, passivos e patrimônio líquido. A obrigação "
+                    "com o Postalis (benefícios pós-emprego) é a maior "
+                    "linha do passivo não circulante e o principal fator "
+                    "por trás do PL negativo.",
         line_ids=[ln.line_id for ln in ALL_LINES if ln.statement == "bp"],
         chart_groups=[
             ("c-bp-tot", "Composição do ativo (R$ bi)",
@@ -895,9 +902,10 @@ def main() -> int:
     (lens_dir / "cash_flow.html").write_text(render_lens(
         env, df, lens="cash_flow",
         title="Fluxo de Caixa",
-        description="DFC pelo método indireto: caixa operacional, capex e "
-                    "atividades de financiamento. Mostra como a empresa gera (ou "
-                    "consome) caixa e financia investimentos.",
+        description="DFC pelo método indireto: caixa operacional, capex "
+                    "(investimentos em imobilizado) e atividades de "
+                    "financiamento. Mostra como a empresa gera (ou "
+                    "consome) caixa e financia seus investimentos.",
         line_ids=[ln.line_id for ln in ALL_LINES if ln.statement == "dfc"],
         chart_groups=[
             ("c-dfc-op", "Caixa das atividades operacionais (R$ bi)",
@@ -919,8 +927,9 @@ def main() -> int:
     (lens_dir / "governance.html").write_text(render_lens(
         env, df, lens="governance",
         title="Governança & Contingências",
-        description="Provisões para processos judiciais (CP+LP), arrendamentos "
-                    "(IFRS 16), instrumentos derivativos e tributos diferidos.",
+        description="Provisões para processos judiciais (curto e longo "
+                    "prazo), arrendamentos sob IFRS 16, instrumentos "
+                    "derivativos e tributos diferidos.",
         line_ids=[
             "bp.passivo.circulante.processos_judiciais",
             "bp.passivo.nao_circulante.processos_judiciais",
@@ -950,8 +959,78 @@ def main() -> int:
     # Ratios lens — derived metrics, not raw line items.
     (lens_dir / "ratios.html").write_text(render_ratios(env, df))
 
+    # Data-quality view: per-vintage badge index + per-doc detail.
+    _render_quality(env, df)
+
     print(f"site rendered to {SITE_DIR}/")
     return 0
+
+
+def _render_quality(env: jinja2.Environment, df: pd.DataFrame) -> None:
+    """Render qualidade/index.html and qualidade/<vintage>.html.
+
+    Reads `data/processed/quality.json` if present (built by
+    `verify/quality.py`); otherwise computes the report inline so this stage
+    is self-sufficient when run before verify.
+    """
+    from correios_audit.verify.quality import build_quality_report
+    quality_dir = SITE_DIR / "qualidade"
+    quality_dir.mkdir(parents=True, exist_ok=True)
+    quality_json = ROOT / "data" / "processed" / "quality.json"
+    if quality_json.exists():
+        report = json.loads(quality_json.read_text())
+    else:
+        report = build_quality_report(df)
+    by_doc = report["by_doc"]
+    by_vintage = report["by_vintage"]
+    vintages_sorted = sorted(by_vintage.values(), key=lambda v: v["vintage_year"])
+
+    # Index page.
+    (quality_dir / "index.html").write_text(env.get_template("quality_index.html").render(
+        title="Qualidade dos dados",
+        vintages=vintages_sorted,
+        root="../",
+        build_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+    ))
+
+    # Per-vintage detail. Manual override quotes (if any) are pulled from
+    # canonical rows whose mapping_method == "manual" and source_quote is
+    # populated.
+    for vy, v in by_vintage.items():
+        primary_doc_id = v["primary_doc_id"]
+        primary = by_doc.get(primary_doc_id, {})
+        vintage_year = int(vy)
+        rows_with_quote = []
+        if "mapping_method" in df.columns:
+            quote_sub = df[
+                (df.vintage_year == vintage_year)
+                & (df.mapping_method == "manual")
+            ]
+            if "source_quote" in quote_sub.columns:
+                quote_sub = quote_sub[quote_sub.source_quote.notna()]
+            for _, r in quote_sub.iterrows():
+                rows_with_quote.append({
+                    "line_id": r["line_id"],
+                    "period_year": int(r["period_year"]),
+                    "period_kind": r["period_kind"],
+                    "value": float(r["value"]),
+                    "source_page": (
+                        int(r["source_page"]) if pd.notna(r.get("source_page"))
+                        else "—"
+                    ),
+                    "source_quote": r.get("source_quote") or "",
+                })
+        (quality_dir / f"{vintage_year}.html").write_text(
+            env.get_template("quality_doc.html").render(
+                title=f"Qualidade {vintage_year}",
+                vintage_year=vintage_year,
+                doc=primary,
+                all_doc_ids=v["all_doc_ids"],
+                rows_with_quote=rows_with_quote,
+                root="../",
+                build_date=datetime.now(UTC).strftime("%Y-%m-%d"),
+            )
+        )
 
 
 if __name__ == "__main__":

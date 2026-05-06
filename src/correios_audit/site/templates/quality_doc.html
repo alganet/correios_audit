@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Qualidade dos dados — safra {{ vintage_year }}</h1>
+
+<p class="lede">
+  Doc principal: <a href="../doc/{{ doc.doc_id }}.html"><code>{{ doc.doc_id }}</code></a>.
+  Método de extração: <strong>{{ doc.ocr_engine or "text" }}</strong>{% if doc.ocr_mean_confidence is not none %},
+  confiança OCR {{ "%.3f"|format(doc.ocr_mean_confidence) }}{% endif %}.
+</p>
+
+<dl class="kv">
+  <dt>Linhas canônicas</dt><dd>{{ doc.rows_canonical }}</dd>
+  <dt>Mapeadas via regex</dt><dd>{{ doc.rows_regex }}</dd>
+  <dt>Mapeadas via fuzzy/OCR</dt><dd>{{ doc.rows_fuzzy_ocr }}</dd>
+  <dt>Não-mapeadas (com valor extraído)</dt><dd>{{ doc.unmapped_with_values }}</dd>
+  <dt>BP cross-foot (Ativo − Passivo)</dt><dd>{{ doc.bp_diff|format_num_or_dash }}</dd>
+  <dt>DRE lucro_bruto check</dt><dd>{{ doc.dre_lucro_bruto_diff|format_num_or_dash }}</dd>
+  <dt>Violações de sinal</dt><dd>{{ doc.sign_violations }}</dd>
+  <dt>Receita líquida (último FY no doc)</dt><dd>{{ doc.revenue_liquida|format_num_or_dash }}</dd>
+  <dt>Total ativo (último FY no doc)</dt><dd>{{ doc.ativo_total|format_num_or_dash }}</dd>
+</dl>
+
+{% if rows_with_quote %}
+<h2>Valores hand-keyed nesta safra</h2>
+<p>
+  Estas linhas vieram de <code>data/manual_overrides/</code> — valores
+  digitados a partir do parecer do auditor, cada um acompanhado da citação
+  verbatim do trecho. A conferência contra o PDF leva poucos segundos.
+</p>
+<table class="data">
+  <thead>
+    <tr><th>line_id</th><th>Período</th><th>Valor</th><th>Página</th><th>Citação</th></tr>
+  </thead>
+  <tbody>
+    {% for r in rows_with_quote %}
+    <tr>
+      <td><code>{{ r.line_id }}</code></td>
+      <td>{{ r.period_year }} {{ r.period_kind }}</td>
+      <td>{{ r.value|format_num }}</td>
+      <td>{{ r.source_page }}</td>
+      <td class="quote">{{ r.source_quote }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if all_doc_ids|length > 1 %}
+<h2>Outros docs nesta safra</h2>
+<ul>
+{% for d in all_doc_ids %}
+  <li><a href="../doc/{{ d }}.html">{{ d }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,11 @@ dependencies = [
     "pdfplumber>=0.11",
     "pymupdf>=1.24",
     "ocrmypdf>=16.0",
+    "paddleocr>=2.7",
+    "paddlepaddle>=2.6",
+    "opencv-python-headless>=4.9",
+    "numpy>=1.26",
+    "rapidfuzz>=3.9",
     "pandas>=2.2",
     "pyarrow>=16.0",
     "pyyaml>=6.0",
@@ -43,4 +48,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m 'not slow'"
+markers = [
+    "slow: tests that exercise PaddleOCR or other heavyweight dependencies",
+]

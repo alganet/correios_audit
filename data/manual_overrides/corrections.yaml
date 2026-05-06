@@ -1,0 +1,84 @@
+# Surgical canonical corrections.
+#
+# Each entry overrides ONE specific (doc_id, line_id, period_year) in the
+# canonical output. Use this for parser/extraction bugs that we cannot
+# reasonably fix in code (brochure column-bleed, OCR truncation, OCR-fused
+# labels). Every `replace` MUST cite a verbatim `source_quote` so a reviewer
+# can verify the figure in <10 seconds against the source PDF.
+#
+# Two actions:
+#   - suppress: drop the parsed row (use when the row is wrong AND we have
+#     no replacement value).
+#   - replace: drop the parsed row + inject a hand-keyed value with
+#     verbatim source provenance (`value`, `source_page`, `source_quote`
+#     all required).
+#
+# `currency_unit:` declares the scale multiplier ('units' | 'thousands' |
+# 'millions'). Set it on the file (default `thousands`) AND/OR per correction
+# — the per-correction value wins. Always pick the unit so `value:` matches
+# the digits printed in the source PDF; this is how the value↔quote sanity
+# check (`_quote_contains_value`) catches transcription typos.
+
+source: "Hand-keyed corrections for known parser bugs"
+currency_unit: thousands
+
+corrections:
+
+  # ─── 2008 brochure: parser column-bleed in DRE ─────────────────────────
+  # The 2008 brochure (cddc8420...pdf, p.2) prints DRE in a 2-column layout
+  # where 2008 and 2007 sit side-by-side. The parser correctly detects the
+  # period header "2008 / 2007 (reclassificado)" but on a few label rows it
+  # consumes a value from the wrong column or splits a multi-row block
+  # against the wrong label. Confirmed by reading the source PDF directly:
+  #
+  #     RECEITA LÍQUIDA DE VENDAS E SERVIÇOS    10.397,7   9.316,2
+  #     CUSTOS DOS PRODUTOS VENDIDOS E SERVIÇOS (7.647,9) (6.604,4)
+  #
+  # The parser placed the 2007 CPV value (-6.604,4) into the
+  # dre.receita_liquida row for 2007.
+  #
+  # The 2008 brochure header reads "Em milhares de R$" but the printed
+  # figures only make sense as millions (Total Ativo R$ 6.79 bi, not bi).
+  # `_DOC_SCALES` already encodes millions for 2008/2009; we follow suit so
+  # `value:` digits match the verbatim quote.
+  - doc_id: 2008-fy-df
+    line_id: dre.receita_liquida
+    period_year: 2007
+    action: replace
+    currency_unit: millions
+    value: 9316.2
+    source_page: 2
+    source_quote: "RECEITA LÍQUIDA DE VENDAS E SERVIÇOS  10.397,7  9.316,2"
+    reason: "Brochure column-bleed: parser put 2007 CPV (-6.604,4) into receita_liquida slot"
+
+  # The "Financeiras" row in 2008's DRE prints the NET (receitas − despesas)
+  # for both columns: 67,9 (2008 NET) / (46,6) (2007 NET, despesas exceeded).
+  # The parser mapped the bare "Financeiras" label to dre.receitas_financeiras
+  # (sign='+'), but that line is meant for gross receitas. Drop the parsed
+  # row — the modern dre.receitas_financeiras / dre.despesas_financeiras
+  # split is published by the brochure on the next two indented sub-rows
+  # ("Despesas (580,7) (495,9)" and "Receitas 648,6 449,3").
+  - doc_id: 2008-fy-df
+    line_id: dre.receitas_financeiras
+    period_year: 2007
+    action: suppress
+    reason: "Bare 'Financeiras' is the NET; parser already captures the split sub-rows"
+
+  # ─── 2013 brochure: BP page truncation on TOTAL DO ATIVO ───────────────
+  # The 2013 brochure (32377eae...pdf, p.3) prints BP with three date
+  # columns (31/12/2013, 31/12/2012, 01/01/2012). The OCR captured the
+  # adjacent "TOTAL DO PASSIVO" row in full — "9.917.971  10.453.859
+  # 10.444.204" — but the "TOTAL DO ATIVO" row got cut off after "10."
+  # because the row sits at the bottom of the rendered page and the OCR
+  # bounding box clipped the rest. By accounting identity ATIVO == PASSIVO,
+  # the 2012 ativo total equals the 2012 passivo total. Brochure prints
+  # values in milhares (the standard 2011+ convention), so currency_unit
+  # follows the file default.
+  - doc_id: 2013-fy-df
+    line_id: bp.ativo.total
+    period_year: 2012
+    action: replace
+    value: 10453859
+    source_page: 3
+    source_quote: "TOTAL DO PASSIVO 9.917.971 10.453.859 10.444.204"
+    reason: "OCR clipped 'TOTAL DO ATIVO 9.917.971 10.' — full 2012 column read from passivo row (BP identity: passivo total == ativo total)"

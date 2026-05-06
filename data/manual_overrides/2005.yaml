@@ -1,0 +1,43 @@
+source: "Demonstrações Financeiras de 2005"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2005/demonstracoes-financeiras-de-2005"
+sha256: "45762a12915452137e907883d4ad7ff0b0ffc3de7f5efea37ba6af80a03d0acf"
+vintage_year: 2005
+currency_unit: units
+page: 1
+notes: |
+  Brochure layout — headlines hand-keyed from the source PDF.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2005-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2005
+    period_kind: fy
+    value: 5461043888.92
+    source_page: 1
+    source_quote: "T O T A L  5.461.043.888,92  5.122.770.766,05"
+  - line_id: bp.passivo.total
+    period_year: 2005
+    period_kind: fy
+    value: 5461043888.92
+    source_page: 1
+    source_quote: "T O T A L  5.461.043.888,92  5.122.770.766,05"
+  - line_id: dre.receita_liquida
+    period_year: 2005
+    period_kind: fy
+    value: 7604582742.63
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  7.604.582.742,63  6.725.564.542,31"
+  - line_id: dre.cpv
+    period_year: 2005
+    period_kind: fy
+    value: -5652866100.49
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (5.652.866.100,49)  (4.935.962.885,11)"
+  - line_id: dre.resultado_liquido
+    period_year: 2005
+    period_kind: fy
+    value: 396387339.41
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  396.387.339,41  316.928.926,29"

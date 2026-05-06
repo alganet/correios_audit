@@ -61,7 +61,7 @@ rules:
   - pattern: '^fluxo de caixa (usado|aplicado) (nas?|pelas) atividades? de investimento$'
     line_id: dfc.inv.recursos_liquidos
   - pattern: '^dividendos( pagos)?$|^dividendos e juros sobre capital proprio$|^transferencias para a uniao\s*[—-]?\s*juros sobre capital proprio.*$|^transferencias para a uniao$'
-    line_id: dfc.fin.amortizacoes
+    line_id: dfc.fin.dividendos_pagos
     where: 'parent_section == "financiamento"'
   - pattern: '^fluxo de caixa (usado|aplicado|gerado) (nas?|pelas) atividades? de financiamento$'
     line_id: dfc.fin.recursos_liquidos
@@ -72,7 +72,7 @@ rules:
   - pattern: '^baixas\s*[-–—]\s*(ativo )?imobilizado$|^baixas? d[oe]s? (ativo )?imobilizado$'
     line_id: dfc.inv.imobilizado_baixas
   - pattern: '^baixas\s*[-–—]\s*(ativo )?intangivel$|^baixas? d[oe]s? (ativo )?intangivel$'
-    line_id: dfc.inv.intangivel_adicoes
+    line_id: dfc.inv.intangivel_baixas
   - pattern: '^(adicoes|baixas)\s*[-–—]\s*propriedades para investimento$|^baixas das propriedades para investimento$'
     line_id: dfc.inv.propriedades_investimento
   - pattern: '^baixas\s*[-–—]\s*museu$|^bens sucateados\s*[-–—]\s*imobilizado$|^baixas (de|d[oa]s) mantidos para venda$'
@@ -87,8 +87,14 @@ rules:
     line_id: dfc.atividades_financiamento
   - pattern: '^capitac(a|i)o de emprestimo$|^captacao de emprestimos?$'
     line_id: dfc.fin.captacoes
+  # Unqualified "Empréstimos e Financiamentos" (no `- Principal` / `- Juros`
+  # qualifier) under Atividades de Financiamento is a NET line — its value
+  # can be positive (net captação) or negative (net amortização) depending
+  # on the period. Map to the net line_id; specific qualified rules below
+  # still target captacoes/amortizacoes.
   - pattern: '^emprestimos e financiamentos$'
-    line_id: dfc.fin.amortizacoes
+    line_id: dfc.fin.emprestimos_net
+    where: 'parent_section == "financiamento"'
   - pattern: '^bens (de )?direito de uso\s*[-–—]?\s*principal$|^bens (de )?direito de uso$|^arrendamento$'
     line_id: dfc.fin.arrendamento
     where: 'parent_section == "financiamento"'
@@ -166,7 +172,7 @@ rules:
 
   # Financing activities (legacy aliases).
   - pattern: '^transferencias para a uniao(\s*[—-]\s*juros sobre capital proprio e dividendos)?$|^transferencias para a uniao$'
-    line_id: dfc.fin.amortizacoes
+    line_id: dfc.fin.dividendos_pagos
     where: 'parent_section == "financiamento"'
   - pattern: '^arrendamento\s*-\s*principal$'
     line_id: dfc.fin.arrendamento

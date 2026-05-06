@@ -1,0 +1,64 @@
+source: "Demonstrações Financeiras de 2009"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2009/demonstracoes-financeiras-de-2009"
+sha256: "c752e7b9fe9d992149a0e40715ef031e179826fa0fa81784b356d027a4512684"
+vintage_year: 2009
+# 2009 brochure header reads "Em milhões de R$" — `_DOC_SCALES[2009]=1_000_000`.
+currency_unit: millions
+page: 1
+notes: |
+  Brochure layout (2-column ATIVO/PASSIVO). Headlines hand-keyed from the
+  source PDF. The 2009 vintage marked the capital increase from R$ 1.869,0
+  to R$ 2.919,1 mi (capitalization of accumulated reserves).
+
+materiality_satisfied_by_overrides: true
+doc_id: 2009-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2009
+    period_kind: fy
+    value: 6986.8
+    source_page: 1
+    source_quote: "T O T A L  6.986,8  6.794,9"
+  - line_id: bp.passivo.total
+    period_year: 2009
+    period_kind: fy
+    value: 6986.8
+    source_page: 1
+    source_quote: "T O T A L  6.986,8  6.794,9"
+  - line_id: bp.ativo.circulante.caixa_equivalentes
+    period_year: 2009
+    period_kind: fy
+    value: 791.1
+    source_page: 1
+    source_quote: "Disponível  4  791,1  1.098,3"
+  - line_id: bp.patrimonio_liquido.capital
+    period_year: 2009
+    period_kind: fy
+    value: 2919.1
+    source_page: 1
+    source_quote: "Capital  14.1  2.919,1  1.869,0"
+  - line_id: dre.receita_liquida
+    period_year: 2009
+    period_kind: fy
+    value: 10973.9
+    source_page: 2
+    source_quote: "RECEITA LÍQUIDA DE VENDAS E SERVIÇOS  16.2  10.973,9  10.397,7"
+  - line_id: dre.cpv
+    period_year: 2009
+    period_kind: fy
+    value: -7336.4
+    source_page: 2
+    source_quote: "CUSTOS DOS PRODUTOS VENDIDOS E DOS SERVIÇOS PRESTADOS  16.3  (7.336,4)  (6.653,3)"
+  - line_id: dre.lucro_bruto
+    period_year: 2009
+    period_kind: fy
+    value: 3637.5
+    source_page: 2
+    source_quote: "LUCRO BRUTO  3.637,5  3.744,4"
+  - line_id: dre.resultado_liquido
+    period_year: 2009
+    period_kind: fy
+    value: 117.6
+    source_page: 2
+    source_quote: "RESULTADO DO PERÍODO  117,6  801,1"

@@ -21,8 +21,16 @@ import pandas as pd
 import yaml
 
 from correios_audit.catalog import by_id
+from correios_audit.normalize.lexicon import apply_ocr_fixes
 from correios_audit.normalize.taxonomy import LINES_BY_ID
 from correios_audit.parse.common import normalize_label
+
+# Fuzzy matching is OCR-aware: only used when the doc was extracted via OCR
+# and the strict regex rules all missed. Score threshold is high (≥92) and
+# the runner-up must be ≥5 points behind to avoid ambiguous picks. Imported
+# lazily because rapidfuzz is a fairly heavy C extension.
+_FUZZY_SCORE_FLOOR = 92
+_FUZZY_AMBIGUITY_GAP = 5
 
 ROOT = Path(__file__).resolve().parents[3]
 PARSED_DIR = ROOT / "data" / "interim" / "parsed"
@@ -39,6 +47,275 @@ class Rule:
     side: str | None
     where: str | None
     statement: str
+    canonical_label: str | None = None    # clean-spelling target for fuzzy matching
+
+
+def _derive_canonical_label(pattern_str: str) -> str | None:
+    """Heuristically derive a canonical label string from a YAML-rule regex.
+
+    The mappings use a small subset of regex features: anchors `^...$`,
+    alternation `(a|b)`, optionals `?`, character classes `[abc]`. To produce
+    a single representative label string for fuzzy matching, we:
+
+    1. Strip outer anchors and any leading/trailing `\\s*`.
+    2. Replace alternation groups with their first alternative.
+    3. Drop `?` (optional groups become literal).
+    4. Replace `\\s` with a literal space.
+    5. Bail and return None if the result still contains regex metacharacters
+       (`*+?\\\\\\(\\[`); those rules are skipped from fuzzy matching.
+
+    Rules can override this with an explicit `canonical_label` in YAML when
+    the heuristic isn't a good match.
+    """
+    s = pattern_str.strip()
+    if s.startswith("^"):
+        s = s[1:]
+    if s.endswith("$"):
+        s = s[:-1]
+    # Resolve alternation groups: `(a|b)?` → `a`. We only handle one nesting
+    # level, which is all the mappings use.
+    s = re.sub(r"\(([^()|]+)\|[^()]+\)\??", r"\1", s)
+    # Drop the simplest optional patterns: `s?` → ``.
+    s = re.sub(r"([a-z])\?", r"\1", s)
+    s = s.replace(r"\s+", " ").replace(r"\s*", " ").replace(r"\s", " ")
+    s = re.sub(r"\s+", " ", s).strip()
+    # If anything beyond plain text + spaces + a few common punctuation
+    # characters survives, the heuristic isn't safe — bail out.
+    if re.search(r"[\\(){}\[\]?+*|]", s):
+        return None
+    if not s:
+        return None
+    return s
+
+
+# Strings that mean "this row is still scaffolding, ignore it" — case- and
+# whitespace-insensitive so a typo doesn't bypass the placeholder check.
+_PLACEHOLDER_QUOTES = {"", "todo", "tbd", "tba", "fixme", "xxx"}
+
+
+def _is_placeholder_quote(quote: object) -> bool:
+    """True if `quote` is missing/empty or a known placeholder marker.
+
+    Used by both the override loader (to skip un-keyed scaffolds) and the
+    materiality opt-out gate (to refuse opt-out on un-keyed YAMLs).
+    """
+    if quote is None:
+        return True
+    return str(quote).strip().lower() in _PLACEHOLDER_QUOTES
+
+
+def _digits_in(s: str) -> str:
+    """Return only the digits in `s` (drop spaces, separators, parens, etc.)."""
+    return "".join(ch for ch in s if ch.isdigit())
+
+
+def _format_value_digits(value: float) -> str:
+    """Render `value` as the user would type it in a YAML — drop a trailing
+    `.0` for integer-valued floats so `10453859.0` becomes "10453859", and
+    preserve full precision for fractional values so `4159071396.73` stays
+    "4159071396.73". Python's `str(float)` already returns the shortest
+    round-tripping repr, so we lean on it.
+    """
+    av = abs(value)
+    if av == int(av):
+        return str(int(av))
+    return str(av)
+
+
+def _quote_contains_value(value: float, scale: float, source_quote: str) -> bool:
+    """Heuristic: confirm the digit sequence of `value` appears inside
+    `source_quote`. Strips Brazilian thousand/decimal separators and any
+    leading minus sign.
+
+    The check is conservative: it only catches gross typos (e.g. extra
+    zero, transposed digits) — not unit confusion. A value of `4159071396.73`
+    becomes "415907139673" which must appear in the digits of the quote.
+    For values < ~R$ 1k the digit sequence may be short enough to false-
+    match against unrelated numbers, so we only enforce the lint for
+    figures of at least 10 raw R$ (i.e. anything material).
+
+    Returns True if the sanity check passes, False if it FAILS (worth
+    flagging the row).
+    """
+    raw = abs(value) * scale
+    if raw < 10:
+        return True
+    # Use the *unscaled* value (pre-scale) digits — that's what the user
+    # typed, and what should appear in the verbatim quote. The scale is
+    # already encoded by `currency_unit:` and is independent of how the
+    # quote prints the number.
+    needle = _digits_in(_format_value_digits(value))
+    if not needle:
+        return True
+    haystack = _digits_in(source_quote)
+    return needle in haystack
+
+
+def _load_canonical_corrections() -> list[dict]:
+    """Read `corrections:` blocks from `data/manual_overrides/*.yaml`.
+
+    A correction is a surgical, per-row fix applied AFTER mapping but
+    BEFORE writing the canonical parquet. It targets a specific
+    `(doc_id, line_id, period_year)` triple — the most granular unit of
+    canonical output — and is meant for parser/extraction bugs that we
+    can't reasonably fix in code (brochure column-bleed, OCR truncation,
+    misclassified labels).
+
+    Two actions:
+
+    - **suppress** — drop the parsed row entirely. Use when the parsed
+      value is wrong AND we don't have a verifiable replacement
+      (e.g. the source PDF doesn't report the figure).
+
+    - **replace** — drop the parsed row AND inject a hand-keyed value
+      with verbatim source provenance. Required fields when
+      `action: replace`: `value`, `source_page`, `source_quote`.
+
+    The unit follows the file's top-level `currency_unit` (defaults to
+    `thousands`, same as standard manual override `rows:`).
+
+    Example:
+
+        corrections:
+          - doc_id: 2008-fy-df
+            line_id: dre.receita_liquida
+            period_year: 2007
+            action: replace
+            value: 9316200
+            source_page: 2
+            source_quote: "RECEITA LÍQUIDA DE VENDAS E SERVIÇOS  9.316,2"
+            reason: "Brochure column-bleed: parser put 2007 CPV value into receita_liquida slot"
+    """
+    if not MANUAL_DIR.exists():
+        return []
+    out: list[dict] = []
+    valid_line_ids = set(LINES_BY_ID)
+    for path in sorted(MANUAL_DIR.glob("*.yaml")):
+        data = yaml.safe_load(path.read_text())
+        if not data:
+            continue
+        corrs = data.get("corrections") or []
+        if not corrs:
+            continue
+        file_unit = (data.get("currency_unit") or "thousands").lower()
+        for c in corrs:
+            # Per-correction override allows one corrections.yaml to mix
+            # docs with different brochure scales (e.g., 2008 prints
+            # millions but 2013 prints thousands).
+            unit = (c.get("currency_unit") or file_unit).lower()
+            scale = 1000.0 if unit == "thousands" else 1_000_000.0 if unit == "millions" else 1.0
+            action = (c.get("action") or "suppress").lower()
+            if action not in ("suppress", "replace"):
+                print(f"WARN correction {path.name}: unknown action '{action}', skipping",
+                      file=sys.stderr)
+                continue
+            lid = c.get("line_id")
+            if lid not in valid_line_ids:
+                print(f"WARN correction {path.name}: unknown line_id {lid}",
+                      file=sys.stderr)
+                continue
+            entry = {
+                "action": action,
+                "doc_id": c["doc_id"],
+                "line_id": lid,
+                "period_year": int(c["period_year"]),
+                "period_kind": c.get("period_kind", "fy"),
+                "scope": c.get("scope", "consolidado"),
+                "reason": c.get("reason", "(no reason given)"),
+                "_source_file": path.name,
+            }
+            if action == "replace":
+                if c.get("value") is None:
+                    print(f"WARN correction {path.name}: replace without value, skipping",
+                          file=sys.stderr)
+                    continue
+                if _is_placeholder_quote(c.get("source_quote")) or not c.get("source_page"):
+                    print(f"WARN correction {path.name}: replace requires source_quote + source_page, skipping",
+                          file=sys.stderr)
+                    continue
+                value = float(c["value"])
+                quote = str(c["source_quote"])
+                # Sanity-check: the digit sequence of `value` should appear
+                # in the verbatim quote. Catches typos like an extra 0 or
+                # a transposed pair without forcing exact format match.
+                if not _quote_contains_value(value, scale, quote):
+                    print(
+                        f"ERROR correction {path.name}: value={value} for "
+                        f"{c['doc_id']}/{lid}/{c['period_year']} not found in "
+                        f"source_quote={quote!r}. Aborting.",
+                        file=sys.stderr,
+                    )
+                    raise SystemExit(2)
+                entry["value"] = value * scale
+                entry["source_page"] = int(c["source_page"])
+                entry["source_quote"] = quote
+                entry["label_raw"] = c.get("label_raw") or LINES_BY_ID[lid].label_pt
+            out.append(entry)
+    return out
+
+
+def _apply_canonical_corrections(canonical: list[dict],
+                                 corrections: list[dict]) -> list[dict]:
+    """Mutate `canonical` per the corrections list. Returns the new list.
+
+    Match key is `(doc_id, line_id, period_year, period_kind, scope)` —
+    the same identity the verify layer uses. A correction without a
+    `scope` field defaults to `consolidado`.
+    """
+    if not corrections:
+        return canonical
+    # Build a lookup: (doc_id, line_id, period_year, period_kind, scope) → correction.
+    # Two YAMLs targeting the same identity is almost always a copy-paste
+    # mistake — surface it loudly rather than silently letting the second
+    # entry win.
+    by_key: dict[tuple, dict] = {}
+    for c in corrections:
+        key = (c["doc_id"], c["line_id"], c["period_year"],
+               c["period_kind"], c["scope"])
+        if key in by_key:
+            prev = by_key[key]
+            print(
+                f"WARN duplicate correction for {key}: "
+                f"{prev['_source_file']} and {c['_source_file']} both target "
+                f"this row — the latter wins",
+                file=sys.stderr,
+            )
+        by_key[key] = c
+    matched: set[tuple] = set()
+    out: list[dict] = []
+    for row in canonical:
+        key = (row.get("doc_id"), row.get("line_id"),
+               int(row.get("period_year") or 0),
+               row.get("period_kind", "fy"),
+               row.get("scope", "consolidado"))
+        c = by_key.get(key)
+        if c is None:
+            out.append(row)
+            continue
+        matched.add(key)
+        if c["action"] == "suppress":
+            print(f"  suppress {key} ({c['_source_file']}: {c['reason']})",
+                  file=sys.stderr)
+            continue
+        # Replace: drop the original row and keep a corrected copy with
+        # the same identity but the hand-keyed value + provenance.
+        new_row = dict(row)
+        new_row["value"] = c["value"]
+        new_row["mapping_method"] = "manual_correction"
+        new_row["source_quote"] = c["source_quote"]
+        new_row["source_page"] = c["source_page"]
+        new_row["label_raw"] = c.get("label_raw", row.get("label_raw"))
+        print(f"  replace  {key} = {c['value']:,.0f} ({c['_source_file']}: {c['reason']})",
+              file=sys.stderr)
+        out.append(new_row)
+    # Warn about corrections that didn't find a target — usually a
+    # symptom of a doc_id typo or a parser change that already drops
+    # the offending row.
+    for key, c in by_key.items():
+        if key not in matched:
+            print(f"WARN correction {c['_source_file']}: no canonical row matched {key}",
+                  file=sys.stderr)
+    return out
 
 
 def _load_manual_overrides() -> list[dict]:
@@ -71,15 +348,50 @@ def _load_manual_overrides() -> list[dict]:
         data = yaml.safe_load(path.read_text())
         if not data:
             continue
+        # Files in manual_overrides/ may carry override rows OR be siblings
+        # like restatements_allowed.yaml (entries: [...]). Skip files that
+        # don't declare any `rows:`.
+        rows_in = data.get("rows") or []
+        if not rows_in:
+            continue
         unit = (data.get("currency_unit") or "thousands").lower()
         scale = 1000.0 if unit == "thousands" else 1_000_000.0 if unit == "millions" else 1.0
         vintage = data.get("vintage_year")
-        for r in data.get("rows", []):
+        for r in rows_in:
             lid = r["line_id"]
             if lid not in valid_line_ids:
                 print(f"WARN manual override {path.name}: unknown line_id {lid}",
                       file=sys.stderr)
                 continue
+            # Skip rows with `value: null` — they're scaffolding placeholders
+            # waiting to be hand-keyed. Materiality / golden / cross-foot
+            # checks still flag the missing figure, so the build fails loudly
+            # if a headline number isn't yet covered.
+            if r.get("value") is None:
+                continue
+            value = float(r["value"])
+            quote = r.get("source_quote")
+            # Once `value:` is filled in, `source_quote` MUST be a real
+            # verbatim from the PDF — placeholders are no longer acceptable.
+            if _is_placeholder_quote(quote):
+                print(
+                    f"ERROR manual override {path.name}: row "
+                    f"{lid}/{r['period_year']} has value={value} but "
+                    f"source_quote is a placeholder ({quote!r}). "
+                    f"Either remove the value or paste the verbatim quote.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(2)
+            # Digit-level sanity check between value and quote (catches
+            # gross transcription typos).
+            if not _quote_contains_value(value, scale, str(quote)):
+                print(
+                    f"ERROR manual override {path.name}: value={value} for "
+                    f"{lid}/{r['period_year']} not found in source_quote={quote!r}. "
+                    f"Aborting.",
+                    file=sys.stderr,
+                )
+                raise SystemExit(2)
             stmt = LINES_BY_ID[lid].statement
             out.append({
                 "doc_id": f"manual:{path.stem}",
@@ -95,6 +407,9 @@ def _load_manual_overrides() -> list[dict]:
                 "scope": r.get("scope", "consolidado"),
                 "value": float(r["value"]) * scale,
                 "page": int(r.get("page") or data.get("page") or 0),
+                "mapping_method": "manual",
+                "source_quote": r.get("source_quote"),
+                "source_page": r.get("source_page") or r.get("page") or data.get("page"),
             })
     return out
 
@@ -105,6 +420,7 @@ def _load_mappings() -> list[Rule]:
         statement = yaml_path.stem  # bp / dre / dfc / dva
         data = yaml.safe_load(yaml_path.read_text())
         for r in data.get("rules", []):
+            canonical = r.get("canonical_label") or _derive_canonical_label(r["pattern"])
             rules.append(
                 Rule(
                     pattern=re.compile(r["pattern"]),
@@ -112,6 +428,7 @@ def _load_mappings() -> list[Rule]:
                     side=r.get("side"),
                     where=r.get("where"),
                     statement=statement,
+                    canonical_label=canonical,
                 )
             )
     # Sanity: every line_id must exist in the taxonomy.
@@ -137,7 +454,10 @@ def _evaluate_where(expr: str | None, ctx: dict) -> bool:
 _SECTION_HINTS: dict[str, list[tuple[re.Pattern, str]]] = {
     "bp": [
         (re.compile(r"^circulante$|^ativo circulante$|^passivo circulante$"), "circulante"),
-        (re.compile(r"^nao circulante$|^ativo nao circulante$|^passivo nao circulante$"),
+        # 2014+ vintages use "Não-Circulante" (hyphen) which normalizes to
+        # "nao-circulante"; older vintages used "Não Circulante" (space).
+        # Accept both so the BP NCP section header is detected uniformly.
+        (re.compile(r"^nao[\s-]?circulante$|^ativo nao[\s-]?circulante$|^passivo nao[\s-]?circulante$"),
          "nao_circulante"),
         (re.compile(r"^realizavel a longo prazo$"), "realizavel_longo_prazo"),
         (re.compile(r"^patrimonio liquido"), "patrimonio_liquido"),
@@ -266,20 +586,59 @@ def _stitch_and_clean(rows: list[dict]) -> list[dict]:
             continue
 
         # 2. Values-bearing row whose own label is either "(continued)" (parser
-        #    placeholder) OR a short continuation fragment — and which is
-        #    preceded by a label-only row. We adopt the prior label as a prefix
-        #    and drop the placeholder/fragment row's redundant label.
+        #    placeholder) OR a short continuation fragment — adopt a sibling
+        #    label-only row's text. Prefer whichever sibling is geometrically
+        #    closer in y-space (the brochure-era pre-IFRS DRE has multiple
+        #    label-only rows interleaved with value-only rows: a value
+        #    sandwiched between "Resultado antes da PLR" and "Participação"
+        #    belongs with whichever is closer, not blindly with the prior).
         is_short_cont = (
             label == "(continued)"
             or _is_continuation_label(label, cleaned[-1].get("label", "") if cleaned else "")
         )
-        if (
-            is_short_cont
-            and values
-            and cleaned
+        prev_is_label_only = (
+            cleaned
             and not (cleaned[-1].get("values") or {})
             and _close_y(cleaned[-1], r)
+        )
+        # Look ahead for a label-only row that may be a closer sibling.
+        next_label_only_idx: int | None = None
+        if (
+            is_short_cont and values and i + 1 < len(rows)
+            and label == "(continued)"   # only for placeholder-label rows
         ):
+            for j in range(i + 1, min(i + 4, len(rows))):
+                cand = rows[j]
+                if cand.get("values"):
+                    break
+                cand_label = (cand.get("label") or "").strip()
+                if not cand_label or _PURE_NOTE_RE.match(cand_label):
+                    continue
+                if _is_continuation_label(cand_label):
+                    continue
+                if not _close_y(r, cand):
+                    break
+                next_label_only_idx = j
+                break
+        prev_dy = (
+            abs((cleaned[-1].get("y") or 0) - (r.get("y") or 0))
+            if prev_is_label_only else float("inf")
+        )
+        next_dy = (
+            abs((rows[next_label_only_idx].get("y") or 0) - (r.get("y") or 0))
+            if next_label_only_idx is not None else float("inf")
+        )
+        # Prefer the closer label-only sibling. If the next is closer, swap
+        # the next-sibling's label into r and consume that row too.
+        if (
+            is_short_cont and values and next_label_only_idx is not None
+            and next_dy < prev_dy
+        ):
+            r["label"] = rows[next_label_only_idx]["label"]
+            cleaned.append(r)
+            i = next_label_only_idx + 1
+            continue
+        if is_short_cont and values and prev_is_label_only:
             prev_label = cleaned[-1].get("label") or ""
             if label == "(continued)":
                 r["label"] = prev_label or label
@@ -397,10 +756,58 @@ def _extract_period(period_label: str) -> tuple[int, str] | None:
     return None
 
 
+def _fuzzy_match(
+    norm: str, statement: str, side: str | None, ctx: dict, rules: list[Rule]
+) -> Rule | None:
+    """OCR fallback: rapidfuzz against `canonical_label` of every rule whose
+    statement/side/where context still applies. Returns the rule iff the top
+    score is ≥ _FUZZY_SCORE_FLOOR AND the runner-up is ≥ _FUZZY_AMBIGUITY_GAP
+    points behind. Otherwise None.
+    """
+    try:
+        from rapidfuzz import fuzz
+    except ImportError:
+        return None
+    candidates: list[tuple[int, Rule]] = []
+    for r in rules:
+        if r.statement != statement:
+            continue
+        if r.side is not None and r.side != side:
+            continue
+        if not r.canonical_label:
+            continue
+        if not _evaluate_where(r.where, ctx):
+            continue
+        score = int(fuzz.WRatio(norm, r.canonical_label))
+        candidates.append((score, r))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: x[0], reverse=True)
+    top_score, top_rule = candidates[0]
+    if top_score < _FUZZY_SCORE_FLOOR:
+        return None
+    if len(candidates) > 1:
+        runner_up_score = candidates[1][0]
+        if top_score - runner_up_score < _FUZZY_AMBIGUITY_GAP:
+            return None
+    return top_rule
+
+
+def _doc_has_ocr(parsed: dict) -> bool:
+    """Whether the source positional JSON for this doc came from OCR.
+
+    Fuzzy matching is only enabled for OCR-extracted docs — applying it to
+    born-digital text would risk silent miscategorization of legitimate but
+    unmapped labels.
+    """
+    return parsed.get("ocr_engine", "text") not in ("text", None)
+
+
 def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
     """Returns (canonical_rows, unmapped_rows)."""
     rules = _load_mappings()
     scale = _scale_for_doc(doc)
+    use_fuzzy = _doc_has_ocr(parsed)
     canonical: list[dict] = []
     unmapped: list[dict] = []
 
@@ -411,7 +818,11 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
     sections: dict[tuple[str, str | None], str] = defaultdict(lambda: "")
     sections[("dfc", None)] = "operacional"
     # Track inferred BP side for rows whose parser-side is None.
-    inferred_bp_side: str | None = None
+    # Default to "ativo": brochure-era BPs (2001-2009) print asset rows from
+    # the very first row of the table without an explicit "ATIVO" header
+    # above them; the walker switches to "passivo" the moment a passivo hint
+    # fires (PASSIVO header, "Passivo Circulante", "Patrimônio Líquido", etc.).
+    inferred_bp_side: str | None = "ativo"
 
     # Header noise: column-header artifacts that have no values and shouldn't
     # count as unmapped. (REAPRESENTADO, NOTA, CNPJ, page numbers, dates, plus
@@ -443,10 +854,22 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
         prev_norm = ""
         while prev_norm != norm:
             prev_norm = norm
-            norm = _PAREN_NOTE_RE.sub("", norm).strip()
-            norm = _TRAILING_PAREN_NUM_RE.sub("", norm).strip()
-            norm = _TRAILING_NOTE_RE.sub("", norm).strip()
-            norm = _TRAILING_NULL_RE.sub("", norm).strip()
+            # Strip trailing decoration repeatedly until stable. Order matters:
+            # peeling a trailing dash (` -`) can expose a note ref (`14.9`)
+            # that the previous pass missed (real example from 2014:
+            # "Empréstimos e Financiamentos 14.9 -" needs both layers).
+            for _ in range(3):
+                prev = norm
+                norm = _PAREN_NOTE_RE.sub("", norm).strip()
+                norm = _TRAILING_PAREN_NUM_RE.sub("", norm).strip()
+                norm = _TRAILING_NULL_RE.sub("", norm).strip()
+                norm = _TRAILING_NOTE_RE.sub("", norm).strip()
+                norm = _TRAILING_NULL_RE.sub("", norm).strip()
+                if norm == prev:
+                    break
+        # OCR-correction lexicon: fix specific known substitutions
+        # (`lnadimplencia` → `inadimplencia`, etc.) before matching.
+        norm = apply_ocr_fixes(norm)
         # Drop pure header artifacts.
         if any(p.match(norm) for p in NOISE_PATTERNS):
             continue
@@ -479,6 +902,11 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
             ),
             None,
         )
+        mapping_method = "regex" if rule else None
+        if rule is None and use_fuzzy:
+            rule = _fuzzy_match(norm, statement, side, ctx, rules)
+            if rule is not None:
+                mapping_method = "fuzzy_ocr"
         if rule is None:
             unmapped.append({
                 "doc_id": parsed["doc_id"],
@@ -491,6 +919,19 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
                 "values": json.dumps(raw["values"], ensure_ascii=False),
             })
             continue
+        # `(-)` prefix in the label is the publication convention for
+        # "this is a deduction" (depreciação acumulada, amortização, perda
+        # ao valor recuperável, PCLD, etc.). The published value may be
+        # printed with or without parens around the number — when without,
+        # the parser captures it as positive. We force the sign to match
+        # the taxonomy's declared `sign='-'` whenever the label opens with
+        # `(-)` so the published intent is preserved in canonical.
+        line_meta = LINES_BY_ID.get(rule.line_id)
+        force_negative = (
+            label.lstrip().startswith("(-)")
+            and line_meta is not None
+            and line_meta.sign == "-"
+        )
         # Emit one row per period. Period keys carry "<label>|<scope>" so
         # 4-column Controladora+Consolidado layouts emit two rows per period.
         for period_key, value in raw["values"].items():
@@ -506,6 +947,9 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
             period_year, period_kind = period
             if period_year not in _VALID_YEAR:
                 continue
+            scaled_value = float(value) * scale
+            if force_negative:
+                scaled_value = -abs(scaled_value)
             canonical.append({
                 "doc_id": parsed["doc_id"],
                 "vintage_year": doc.year,
@@ -518,8 +962,9 @@ def apply_doc(parsed: dict, doc) -> tuple[list[dict], list[dict]]:
                 "period_kind": period_kind,
                 "period_label": period_label,
                 "scope": scope,
-                "value": float(value) * scale,
+                "value": scaled_value,
                 "page": raw["page"],
+                "mapping_method": mapping_method,
             })
     return canonical, unmapped
 
@@ -558,6 +1003,17 @@ def main(argv: list[str] | None = None) -> int:
                 writer.writerows(unmapped)
         print(f"{parsed['doc_id']}: mapped={len(canonical)} unmapped={len(unmapped)}",
               file=sys.stderr)
+
+    # Surgical canonical corrections. Run BEFORE adding manual overrides so
+    # corrections only operate on parser output (manual rows have their own
+    # `doc_id` namespace `manual:*` and shouldn't be patched this way).
+    corrections = _load_canonical_corrections()
+    if corrections:
+        before = len(all_canonical)
+        print(f"\ncanonical corrections: {len(corrections)} entries", file=sys.stderr)
+        all_canonical = _apply_canonical_corrections(all_canonical, corrections)
+        delta = len(all_canonical) - before
+        print(f"  net change: {delta:+d} rows", file=sys.stderr)
 
     # Apply manual overrides (hand-typed figures from sources we can't extract).
     manual_rows = _load_manual_overrides()

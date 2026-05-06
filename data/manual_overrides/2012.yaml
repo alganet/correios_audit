@@ -1,0 +1,63 @@
+source: "Demonstrações Financeiras 2012"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2012/demonstracoes-financeiras-de-2012"
+sha256: "b137ccd1a0cc570a30a7592e526741a330d209fca6d8b07bef2d689f0daa99de"
+vintage_year: 2012
+# 2012 brochure header reads "(em milhares R$)" — `_DEFAULT_SCALE=1000`.
+currency_unit: thousands
+page: 1
+notes: |
+  Parser regression: the 2012 PDF's DRE was extracted with row-ordering
+  bugs (column values flipped vs header). The BP totals row was also
+  missed by the parser despite the OCR capturing it cleanly at p1 y=366.
+  Headlines below provide a verifiable baseline so the verify gates have
+  ground truth. Followup: investigate parser routing on this doc.
+
+  DRE column-flip note: page 2 prints "2012 2011" header but OCR placed
+  values in reversed column order on the CPV row specifically. Math check:
+  receita_liquida (2012) - lucro_bruto (2012) = -CPV (2012)
+    13,970,372 - 3,765,001 = 10,205,371 → CPV 2012 = -10,205,371
+  Confirmed against 2014 vintage prior-period column for 2012.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2012-fy-df
+
+rows:
+  # ─── BP at 31/12/2012 (p1) ─────────────────────────────────────────────
+  - line_id: bp.ativo.total
+    period_year: 2012
+    period_kind: fy
+    value: 10454512
+    source_page: 1
+    source_quote: "TOTAL 10.454.512 10.530.872"
+  - line_id: bp.passivo.total
+    period_year: 2012
+    period_kind: fy
+    value: 10454512
+    source_page: 1
+    source_quote: "TOTAL 10.454.512 10.530.872 (BP identity: passivo == ativo)"
+
+  # ─── DRE 2012 (p2) ──────────────────────────────────────────────────────
+  - line_id: dre.receita_liquida
+    period_year: 2012
+    period_kind: fy
+    value: 13970372
+    source_page: 2
+    source_quote: "RECEITA LiQUIDA DE VENDAS E SERVICOS 15.2 13.970.372 13.214.108"
+  - line_id: dre.cpv
+    period_year: 2012
+    period_kind: fy
+    value: -10205371
+    source_page: 2
+    source_quote: "CUSTOS DOS PRODUTOS VENDIDOS E DOS SERVICOS PRESTADOS 15.3 (8.918.506) (10.205.371) — OCR reversed column order; (10.205.371) is the 2012 figure (verified by lucro_bruto math: receita_liquida - lucro_bruto = 13.970.372 - 3.765.001 = 10.205.371)"
+  - line_id: dre.lucro_bruto
+    period_year: 2012
+    period_kind: fy
+    value: 3765001
+    source_page: 2
+    source_quote: "LUCRO BRUTO 3.765.001 4.295.602"
+  - line_id: dre.resultado_liquido
+    period_year: 2012
+    period_kind: fy
+    value: 1044061
+    source_page: 2
+    source_quote: "RESULTADO LiQUIDO DO PERiODO 1.044.061 882.747"

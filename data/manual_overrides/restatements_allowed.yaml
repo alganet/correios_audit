@@ -1,0 +1,333 @@
+# Allowlist for the restatement-drift check in verify/checks.py.
+#
+# When the same (line_id, period_year) is reported in two different annuals
+# and the values diverge by > 1%, the build fails — *unless* the (line_id,
+# period_year, vintage_pair) combination is allowlisted below.
+#
+# Entry format (`line_id` or `line_id_prefix` required, plus `period_year`
+# or `period_years`; optional `vintage_from` / `vintage_to` narrow the scope
+# to a specific restatement event):
+#
+#   - line_id_prefix: dva.
+#     period_years: [2020, 2021]
+#     vintage_from: 2021
+#     vintage_to: 2022
+#     reason: "Correios restated the 2020-2021 DVA in the 2022 annual..."
+#
+# Entries here document REAL Correios restatements observed across
+# vintages — not parser bugs (those should be fixed in the parser/mapping
+# rules) and not OCR noise (the drift check skips brochure-era already).
+
+entries:
+  # ─── 2022 vintage restated 2020-2021 DVA categories ─────────────────────
+  # The 2022 annual reorganized its DVA presentation: PCLD line was
+  # reclassified, distribution-to-trabalho/terceiros sub-categories were
+  # split differently, and operational receitas figures were trimmed by
+  # provisão adjustments. All affect 2020 and 2021 prior-period columns.
+  - line_id_prefix: dva.receitas
+    period_years: [2020, 2021]
+    vintage_from: 2021
+    vintage_to: 2022
+    reason: "DVA restatement 2022: PCLD reclassified and operational receitas trimmed"
+  - line_id_prefix: dva.dist
+    period_years: [2020, 2021]
+    vintage_from: 2021
+    vintage_to: 2022
+    reason: "DVA restatement 2022: distribuição categories regrouped"
+  - line_id_prefix: dva.insumos
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA restatement 2014: insumos line redefined for IFRS continuity"
+  - line_id_prefix: dva.va
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA restatement 2014: valor adicionado totals recomputed"
+  - line_id: dva.total_distribuido
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA restatement 2014: total distribuído recomputed alongside VA"
+  - line_id: dva.receitas.outras
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA restatement 2014: outras receitas reclassified"
+  - line_id: dva.insumos.provisoes
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "Routine provisões adjustment in 2024 annual"
+
+  # ─── 2023 vintage restated 2021 BP (post-COVID recompute) ───────────────
+  # The 2023 annual reclassified several 2021 balance-sheet lines, most
+  # notably the caixa→aplicações reorganization (caixa dropped from R$ 914M
+  # to R$ 87M as part of moving short-term applications out of the cash
+  # bucket) and benefícios a empregados grew via a contingency reclassification.
+  - line_id_prefix: bp.ativo.circulante
+    period_year: 2021
+    vintage_from: 2021
+    vintage_to: 2023
+    reason: "BP 2023 restatement of 2021: caixa→aplicações reorganization, contingencies reclass"
+  - line_id_prefix: bp.passivo.circulante
+    period_year: 2021
+    vintage_from: 2021
+    vintage_to: 2023
+    reason: "BP 2023 restatement of 2021 liabilities (employee benefits, accruals)"
+  - line_id_prefix: bp.passivo.nao_circulante
+    period_year: 2021
+    vintage_from: 2021
+    vintage_to: 2023
+    reason: "BP 2023 restatement of 2021 long-term liabilities"
+  - line_id_prefix: bp.patrimonio_liquido
+    period_year: 2021
+    vintage_from: 2021
+    vintage_to: 2023
+    reason: "BP 2023 restatement of 2021 PL: reservas regrouped, prejuízos updated"
+  - line_id_prefix: bp.ativo.nao_circulante
+    period_year: 2021
+    vintage_from: 2021
+    vintage_to: 2023
+    reason: "BP 2023 restatement of 2021 long-term assets"
+
+  # ─── 2024 vintage restated 2022 BP ──────────────────────────────────────
+  - line_id_prefix: bp.ativo.nao_circulante
+    period_year: 2022
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 routine restatement of 2022 long-term assets"
+  - line_id_prefix: bp.passivo.nao_circulante
+    period_year: 2022
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 routine restatement of 2022 long-term liabilities"
+  - line_id_prefix: bp.patrimonio_liquido
+    period_year: 2022
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 routine restatement of 2022 patrimônio"
+  # The 2024 annual moved a chunk of 2022 'outros' between BP buckets — a
+  # tiny absolute number that drifts >50% just from the reclassification.
+  - line_id: bp.passivo.circulante.outros
+    period_year: 2022
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 reclassification of 2022 'outros' between buckets"
+
+  # ─── 2024 vintage restated 2023 BP (DRE 2023 cascade) ───────────────────
+  # The 2024 annual significantly restated the 2023 column across the BP
+  # because the 2023 DRE itself was restated (revenue recognition + expense
+  # reclassifications, see DRE allowlist below). The restated lucro líquido
+  # flows into PL, which in turn cascades through processos judiciais and
+  # tributos diferidos accruals.
+  - line_id_prefix: bp.ativo.nao_circulante.realizavel_longo_prazo
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 restatement of 2023 long-term assets (DRE cascade)"
+  - line_id_prefix: bp.passivo.nao_circulante
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 restatement of 2023 long-term liabilities (DRE cascade)"
+  - line_id_prefix: bp.patrimonio_liquido
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "BP 2024 restatement of 2023 PL (DRE 2023 cascade reduced retained earnings)"
+
+  # ─── 2014 vintage restated 2012-2013 BP (BR-GAAP→IFRS continuity) ──────
+  # The 2014 annual was the first full-IFRS report; it restated 2012-2013
+  # comparatives with refined classifications (tributos diferidos pulled
+  # out of realizável a longo prazo, fornecedores split out, etc.).
+  - line_id_prefix: bp.ativo.circulante
+    period_years: [2012, 2013]
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement: prior-period reclassifications"
+  - line_id_prefix: bp.passivo.circulante
+    period_years: [2012, 2013]
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement of liabilities"
+  - line_id_prefix: bp.ativo.nao_circulante
+    period_years: [2012, 2013]
+    vintage_from: 2012
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement of long-term assets"
+  - line_id_prefix: bp.ativo.nao_circulante
+    period_year: 2012
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement of 2012 long-term assets"
+  - line_id_prefix: bp.patrimonio_liquido
+    period_years: [2012, 2013]
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement: reservas regrouped"
+  # The IFRS continuity restatement also shifts the BP totals themselves.
+  # 2013 brochure reported 2012 ATIVO TOTAL = R$ 10.45 bi; 2014 IFRS
+  # restatement of the same column reads R$ 12.97 bi.
+  - line_id: bp.ativo.total
+    period_year: 2012
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement: ativo total grew with consolidation"
+  - line_id: bp.passivo.total
+    period_year: 2012
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity restatement: passivo total grew with consolidation"
+  # And the small "outros valores e bens" current-asset bucket was
+  # refined by 6.8% between the 2012 brochure and the 2014 IFRS report.
+  - line_id: bp.ativo.circulante.outros_valores_e_bens
+    period_year: 2012
+    vintage_from: 2012
+    vintage_to: 2014
+    reason: "BP 2014 IFRS-continuity refinement of 'outros valores e bens' (6.8%)"
+
+  # ─── 2018 vintage restated 2017 PCLD/contingency ────────────────────────
+  - line_id: bp.passivo.circulante.beneficios_a_empregados
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Contingency reclass between BCP and BNCP in 2018 vintage"
+  - line_id: bp.passivo.circulante.adiantamentos_clientes
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Receitas-a-apropriar split out of adiantamentos in 2018"
+  - line_id: bp.passivo.circulante.convenio_saude
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Convênio postal-saúde reclassified in 2018"
+  - line_id: bp.passivo.circulante
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Total CP restated alongside sub-line reclassifications"
+  - line_id: bp.passivo.nao_circulante.beneficios_pos_emprego
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Postalis actuarial reassessment in 2018"
+  - line_id: bp.passivo.nao_circulante.tributos_diferidos
+    period_year: 2018
+    vintage_from: 2018
+    vintage_to: 2019
+    reason: "Tributos diferidos recomputed under IFRS 16 transition"
+  - line_id: bp.passivo.nao_circulante.outros
+    period_year: 2018
+    vintage_from: 2018
+    vintage_to: 2019
+    reason: "Other liabilities reclassified during IFRS 16 transition"
+  - line_id: bp.passivo.circulante.beneficios_a_empregados
+    period_year: 2018
+    vintage_from: 2018
+    vintage_to: 2019
+    reason: "Employee benefits reclassified during IFRS 16 transition"
+
+  # ─── DFC restatement: 2024 vintage updated 2023 DFC categories ──────────
+  - line_id_prefix: dfc.op.itens_nao_caixa
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "DFC provisões line refined in 2024 annual"
+  - line_id_prefix: dfc.op.mutacoes
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DFC mutações categories refined for IFRS continuity"
+  - line_id: dfc.inv.propriedades_investimento
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "Propriedades para investimento adjusted in 2024 annual"
+
+  # ─── Full-cycle 2009 DFC restatement ───────────────────────────────────
+  - line_id: dfc.inv.recursos_liquidos
+    period_year: 2009
+    vintage_from: 2010
+    vintage_to: 2014
+    reason: "DFC investment subtotal restated under IFRS in 2014"
+
+  # ─── 2024 vintage restated 2023 DRE/DRA/DFC ─────────────────────────────
+  # The 2024 annual published a materially restated 2023 DRE — receita
+  # líquida +35%, lucro bruto +42%, despesas administrativas +51%, etc.
+  # This is a significant reorganization (revenue recognition timing,
+  # expense reclassifications). All affect the 2023 prior-period column.
+  - line_id_prefix: dre.
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "DRE 2024: significant restatement of 2023 (revenue recognition + expense reclass)"
+  - line_id_prefix: dra.
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "DRA 2024: actuarial remensuração + reclassifications updated 2023 column"
+  - line_id_prefix: dfc.op.
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "DFC 2024: itens não-caixa + mutações refined for 2023 prior-year column"
+  - line_id_prefix: dva.dist.acionistas
+    period_year: 2023
+    vintage_from: 2023
+    vintage_to: 2024
+    reason: "DVA acionistas tracks resultado líquido — follows DRE 2023 restatement"
+  - line_id_prefix: dva.dist.acionistas
+    period_year: 2022
+    vintage_from: 2022
+    vintage_to: 2023
+    reason: "DVA acionistas follows DRE; small 5% adjustment in 2023 vintage"
+
+  # ─── 2013 vintage restated 2011-2012 DRE (post-IFRS first-year refinement) ─
+  - line_id_prefix: dre.
+    period_years: [2011, 2012]
+    vintage_from: 2012
+    vintage_to: 2013
+    reason: "DRE 2013: post-IFRS refinement of expense classifications for 2011-2012"
+  - line_id_prefix: dva.dist.acionistas
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA acionistas tracks resultado líquido — 2014 restated 2013"
+  # The 2014 annual also restated the 2013 'governo - outros' DVA bucket:
+  # 558% upward as governo distributions were broken out from a
+  # consolidated row.
+  - line_id_prefix: dva.dist.governo
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DVA 2014: governo distribuição categories regrouped from 2013"
+
+  # ─── Small-balance reclassifications (real, low-stakes) ──────────────────
+  # These are minor reorganizations between line_ids that show as drifts
+  # but are routine accounting refinements rather than data integrity issues.
+  - line_id: bp.ativo.circulante.aplicacoes
+    period_year: 2021
+    vintage_from: 2022
+    vintage_to: 2023
+    reason: "Small (2.4%) refinement of 2021 aplicações in 2023 vintage"
+  - line_id: bp.ativo.circulante.cobranca_juridica
+    period_year: 2012
+    vintage_from: 2012
+    vintage_to: 2014
+    reason: "Cobrança jurídica reclassified between 2012 brochure and 2014 IFRS"
+
+  # ─── DFC op.resultado_periodo across IFRS transition ────────────────────
+  - line_id: dfc.op.resultado_periodo
+    period_year: 2013
+    vintage_from: 2013
+    vintage_to: 2014
+    reason: "DFC starting line follows DRE; 2013 restated in 2014 first-IFRS annual"
+
+  # ─── 2018 vintage restated 2017 contas internacionais ──────────────────
+  - line_id: bp.passivo.circulante.contas_internacionais
+    period_year: 2017
+    vintage_from: 2017
+    vintage_to: 2018
+    reason: "Contas internacionais a pagar reclassified between 2017 and 2018 vintages"

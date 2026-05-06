@@ -1,4 +1,4 @@
-.PHONY: sync fetch extract normalize verify site clean lint test all
+.PHONY: sync fetch extract normalize verify quality site clean lint test all
 
 PY := uv run python -m
 
@@ -17,10 +17,17 @@ normalize:
 verify:
 	$(PY) correios_audit.verify.checks
 
-site:
+quality:
+	$(PY) correios_audit.verify.quality
+
+site: quality
 	$(PY) correios_audit.site.build
 
-all: fetch extract normalize verify site
+# Order matters: quality + site run BEFORE verify so the qualidade/ pages are
+# always rebuilt — even when verify hard-fails on the brochure era — so you
+# can browse the quality dashboard to see which docs need manual_overrides.
+# verify runs last so a failing build still exits non-zero for CI.
+all: fetch extract normalize quality site verify
 
 lint:
 	uv run ruff check src tests

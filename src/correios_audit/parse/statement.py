@@ -58,7 +58,7 @@ def _classify_words(
     leftmost_col_x = min((c.x_center for c in columns), default=float("inf"))
     first_value_idx: int | None = None
     for i, w in enumerate(words):
-        if looks_like_value(w.text) and _word_in_value_zone(w, columns):
+        if looks_like_value(w.text, confidence=w.confidence) and _word_in_value_zone(w, columns):
             first_value_idx = i
             break
     if first_value_idx is None:
@@ -106,7 +106,7 @@ def _assign_values(
         if abs(col.x_center - w.x_center) > COLUMN_TOLERANCE_PT:
             continue
         key = f"{col.label}|{col.scope}"
-        out[key] = parse_value(w.text)
+        out[key] = parse_value(w.text, confidence=w.confidence)
     return out
 
 
@@ -119,11 +119,11 @@ def _try_merge_pair(line_a: dict, line_b: dict) -> dict | None:
     b_words = words_from_line(line_b)
     if not a_words or not b_words:
         return None
-    a_has_value = any(looks_like_value(w.text) for w in a_words)
-    b_has_value = any(looks_like_value(w.text) for w in b_words)
+    a_has_value = any(looks_like_value(w.text, confidence=w.confidence) for w in a_words)
+    b_has_value = any(looks_like_value(w.text, confidence=w.confidence) for w in b_words)
     a_only_label = not a_has_value
     b_only_value = b_has_value and not any(
-        not looks_like_value(w.text) for w in b_words
+        not looks_like_value(w.text, confidence=w.confidence) for w in b_words
     )
     if a_only_label and b_only_value:
         return {
@@ -246,11 +246,17 @@ def parse_simple_statement(
             columns = cols
             break
     if header_start is None or not columns:
-        # Body-row column inference was tried but produced unreliable results
-        # for OCR'd quarterlies and BR-GAAP-era annuals (8-column layouts,
-        # garbled headers). Without a clear date header we can't safely assign
-        # values to periods, so we return None and accept the coverage gap.
-        return None
+        # No date header found. Try body-row column inference if the caller
+        # provided a vintage_year (annuals only — quarterlies have ambiguous
+        # 8-column layouts that can't be disambiguated without explicit
+        # headers). With cleaner OCR (PaddleOCR), the inference is reliable
+        # for 2-column and 4-column body layouts.
+        inferred = _infer_columns_from_body(lines, 0, vintage_year)
+        if inferred is None:
+            return None
+        header_end, columns = inferred
+        if len(columns) < min_columns:
+            return None
 
     rows: list[RawRow] = []
     i = header_end + 1

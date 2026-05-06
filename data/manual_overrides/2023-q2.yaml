@@ -1,0 +1,72 @@
+source: "Demonstrações Contábeis 2º Trimestre 2023"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2023/demonstracoes-contabeis-2o-trim-2023"
+sha256: "a9ca4cb95ad5394d3fd94422d56f8074b94bd0c577f38ad2f3932aa6aa45105e"
+vintage_year: 2023
+# Quarterly publication header reads "Em R$ milhares" — `_DEFAULT_SCALE=1000`.
+currency_unit: thousands
+page: 3
+notes: |
+  Q2 2023 interim. After the OCR fixes for "i ti t" → "investimento" and
+  "e dos servicos t d" → "e dos servicos prestados", the parser extracts
+  this doc cleanly. The headline figures below are an independent hand-
+  keyed cross-check against page 3 (BP) and page 4 (DRE) — every digit
+  matches the parser output, providing belt-and-suspenders verification.
+
+  H1-2023 cumulative DRE values (Período de 6 meses findo em 30/06/2023)
+  use period_kind=q2 — the parser-side convention for half-year cumulative
+  flow figures.
+
+doc_id: 2023-q2-df
+
+rows:
+  # ─── BP at 30/06/2023 (page 3) ──────────────────────────────────────────
+  - line_id: bp.ativo.total
+    period_year: 2023
+    period_kind: q2
+    value: 17342772
+    source_page: 3
+    source_quote: "TOTAL DO ATIVO  17.342.772  17.993.922  17.744.734"
+  - line_id: bp.passivo.total
+    period_year: 2023
+    period_kind: q2
+    value: 17342772
+    source_page: 3
+    source_quote: "TOTAL DO PASSIVO E PATRIMÔNIO LÍQUIDO  17.342.772  17.993.922  17.744.734"
+  - line_id: bp.ativo.circulante.caixa_equivalentes
+    period_year: 2023
+    period_kind: q2
+    value: 145156
+    source_page: 3
+    source_quote: "Caixa e equivalentes de caixa  4  145.156  91.202  87.670"
+  - line_id: bp.patrimonio_liquido.capital
+    period_year: 2023
+    period_kind: q2
+    value: 3403458
+    source_page: 3
+    source_quote: "Capital  19.1  3.403.458  3.403.458  3.403.458"
+
+  # ─── DRE H1 2023 cumulative (page 4) ────────────────────────────────────
+  - line_id: dre.receita_liquida
+    period_year: 2023
+    period_kind: q2
+    value: 9314050
+    source_page: 4
+    source_quote: "Receita líquida de vendas e serviços  20.1  4.807.768  4.997.957  9.314.050  9.964.911"
+  - line_id: dre.cpv
+    period_year: 2023
+    period_kind: q2
+    value: -7560827
+    source_page: 4
+    source_quote: "Custo dos produtos vendidos e dos serviços ... 20.2  (3.768.184)  (3.455.863)  (7.560.827)  (6.747.387)"
+  - line_id: dre.lucro_bruto
+    period_year: 2023
+    period_kind: q2
+    value: 1753223
+    source_page: 4
+    source_quote: "Lucro bruto  1.039.584  1.542.094  1.753.223  3.217.524"
+  - line_id: dre.resultado_liquido
+    period_year: 2023
+    period_kind: q2
+    value: -735363
+    source_page: 4
+    source_quote: "RESULTADO LÍQUIDO DO PERÍODO  (407.180)  193.966  (735.363)  421.756"

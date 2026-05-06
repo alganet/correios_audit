@@ -1,0 +1,55 @@
+source: "Demonstrações Financeiras de 2004 (with cross-references to 2005 vintage where 2004 OCR was unreliable)"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2004/demonstracoes-financeiras-de-2004"
+sha256: "139f1fafdad32a7d124fec1bb308eea48b6ed73f6a5f3217af7cc368ae3a7bcb"
+vintage_year: 2004
+# 2004 brochure prints values in raw R$ — `_DOC_SCALES[2004]=1.0`.
+currency_unit: units
+page: 1
+notes: |
+  2004 PDF is scanned image-only; values were extracted via PaddleOCR. The
+  DRE figures came through cleanly but the BP Total OCR'd as
+  "5.122.770.756,05" (digit transposition: 756 vs 766). The authoritative
+  figure 5.122.770.766,05 comes from the 2005 brochure's prior-period
+  column, and is what the 2005 vintage's BP cross-foot validates against.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2004-fy-df
+
+rows:
+  # ─── BP Total: cross-referenced from the 2005 brochure (cleaner OCR) ────
+  - line_id: bp.ativo.total
+    period_year: 2004
+    period_kind: fy
+    value: 5122770766.05
+    source_page: 1
+    source_quote: "T O T A L  5.461.043.888,92  5.122.770.766,05 (2005 brochure prior-period column; 2004 OCR digit-transposed the same figure)"
+  - line_id: bp.passivo.total
+    period_year: 2004
+    period_kind: fy
+    value: 5122770766.05
+    source_page: 1
+    source_quote: "T O T A L  5.461.043.888,92  5.122.770.766,05 (2005 brochure prior-period column; 2004 OCR digit-transposed the same figure)"
+
+  # ─── DRE: 2004 OCR'd cleanly ────────────────────────────────────────────
+  # NB: the 2004 PDF prints columns in 2004/2003 header order but the OCR
+  # word-flow puts values in the reverse order. Cross-checked against the
+  # 2005 brochure's prior-period column (which confirmed RL=6.725,5mi,
+  # CPV=-4.935,9mi, LL=316,9M for 2004).
+  - line_id: dre.receita_liquida
+    period_year: 2004
+    period_kind: fy
+    value: 6725564542.31
+    source_page: 3
+    source_quote: "RECEITA OPERACIONAL LiQUIDA 6.725.564.542,31"
+  - line_id: dre.cpv
+    period_year: 2004
+    period_kind: fy
+    value: -4935962885.11
+    source_page: 3
+    source_quote: "CUSTOS DOS SERVICOS (4.935.962.885,11) (3.791.339.628,81)"
+  - line_id: dre.resultado_liquido
+    period_year: 2004
+    period_kind: fy
+    value: 316928926.29
+    source_page: 3
+    source_quote: "LUCRO LiQUIDO DO EXERCiCIO 288.210.258,45  316.928.926,29 (2004 OCR layout reverses column order; 316.93M is the 2004 figure per 2005 brochure prior-column)"

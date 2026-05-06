@@ -35,12 +35,38 @@ _VALUE_FORMAT = re.compile(
     re.VERBOSE,
 )
 
+# Common OCR substitutions that turn digits into letters and vice versa. Used
+# by `_ocr_normalize_digits` to repair date and value tokens before applying
+# the strict regex. We intentionally keep the substitution table tiny — broad
+# substitutions risk corrupting clean text.
+_OCR_DIGIT_SUBS = str.maketrans({
+    "O": "0", "o": "0", "Q": "0",
+    "l": "1", "I": "1", "i": "1",
+    "S": "5", "s": "5",
+    "B": "8",
+    "Z": "2", "z": "2",
+})
+
+
+def _ocr_normalize_digits(token: str) -> str:
+    """Replace common OCR letter-for-digit substitutions in a token.
+
+    Only applied when the original token already contains some digits or
+    parentheses — bare alphabetic words ('Caixa', 'AFAC') must not be
+    mangled. Used by `looks_like_value` and `detect_period_columns` in their
+    OCR-tolerant fallback.
+    """
+    if not any(c.isdigit() for c in token):
+        return token
+    return token.translate(_OCR_DIGIT_SUBS)
+
 
 @dataclass(frozen=True)
 class Word:
     x0: float
     x1: float
     text: str
+    confidence: float = 1.0   # 1.0 for born-digital text; OCR fills the recognizer score
 
     @property
     def x_center(self) -> float:
@@ -48,7 +74,12 @@ class Word:
 
 
 def words_from_line(line: dict) -> list[Word]:
-    return [Word(w[0], w[1], w[2]) for w in line["words"]]
+    out: list[Word] = []
+    for w in line["words"]:
+        # Schema is [x0, x1, text, confidence?]; old fixtures may omit confidence.
+        conf = w[3] if len(w) > 3 else 1.0
+        out.append(Word(w[0], w[1], w[2], float(conf)))
+    return out
 
 
 def normalize_label(s: str) -> str:
@@ -61,11 +92,20 @@ def normalize_label(s: str) -> str:
     return s
 
 
-def looks_like_value(token: str) -> bool:
+def looks_like_value(token: str, *, confidence: float = 1.0) -> bool:
     t = token.strip()
     if t in ("-", "—", "–"):
         return True
-    return bool(_VALUE_FORMAT.match(t))
+    if _VALUE_FORMAT.match(t):
+        return True
+    # OCR fallback: only for low-confidence words, try common letter→digit
+    # substitutions before giving up. Confidence=1.0 (born-digital) skips
+    # this branch — we never rewrite clean text.
+    if confidence < 0.95:
+        repaired = _ocr_normalize_digits(t)
+        if repaired != t and _VALUE_FORMAT.match(repaired):
+            return True
+    return False
 
 
 def looks_like_note_ref(token: str) -> bool:
@@ -75,11 +115,18 @@ def looks_like_note_ref(token: str) -> bool:
     return bool(re.match(r"^\d+(?:\.\d+)*(?:[,;]\s*\d+(?:\.\d+)*)*$", t))
 
 
-def parse_value(token: str) -> float | None:
-    """Parse a Brazilian-formatted number. Returns None for '-' (null)."""
+def parse_value(token: str, *, confidence: float = 1.0) -> float | None:
+    """Parse a Brazilian-formatted number. Returns None for '-' (null).
+
+    `confidence`: when below 0.95, common OCR letter-for-digit substitutions
+    are applied before parsing. Pass 1.0 (default) for born-digital text to
+    keep the parse fully deterministic.
+    """
     t = token.strip()
     if t in ("-", "—", "–", ""):
         return None
+    if confidence < 0.95:
+        t = _ocr_normalize_digits(t)
     neg = t.startswith("(") and t.endswith(")")
     if neg:
         t = t[1:-1]
@@ -148,23 +195,36 @@ def detect_period_columns(line: dict) -> list[PeriodColumn]:
       "2024"                        — bare year (older quarterlies)
       "31 dez 2014"                 — Portuguese spelled date, merged from
                                       consecutive tokens by `_merge_textual_dates`.
+
+    OCR fallback: when a token's confidence is < 0.95 and the strict regex
+    misses, common letter→digit substitutions are applied (`2OlO` → `2010`).
     """
     raw_words = words_from_line(line)
     words = _merge_textual_dates(raw_words)
     out: list[PeriodColumn] = []
     for w in words:
-        if _DATE_RE.match(w.text):
-            year = int(re.findall(r"(\d{4})", w.text)[-1])
-            out.append(PeriodColumn(label=w.text, x_center=w.x_center, period_year=year))
+        text = w.text
+        if _DATE_RE.match(text):
+            year = int(re.findall(r"(\d{4})", text)[-1])
+            out.append(PeriodColumn(label=text, x_center=w.x_center, period_year=year))
             continue
+        if w.confidence < 0.95:
+            repaired = _ocr_normalize_digits(text)
+            if repaired != text and _DATE_RE.match(repaired):
+                year = int(re.findall(r"(\d{4})", repaired)[-1])
+                out.append(
+                    PeriodColumn(label=repaired, x_center=w.x_center, period_year=year)
+                )
+                continue
         # Multi-token Portuguese spelled date — must contain whitespace, since
         # only `_merge_textual_dates` produces those (a CNPJ like
         # "34.028.316/0001-03" is a single token and won't be misclassified).
-        if " " in w.text and re.fullmatch(r"\d{1,2}\s.+\s\d{4}", w.text):
-            year = int(re.findall(r"(\d{4})", w.text)[-1])
+        if " " in text and re.fullmatch(r"\d{1,2}\s.+\s\d{4}", text):
+            year = int(re.findall(r"(\d{4})", text)[-1])
             if year >= 1990:
-                out.append(PeriodColumn(label=w.text, x_center=w.x_center,
-                                        period_year=year))
+                out.append(
+                    PeriodColumn(label=text, x_center=w.x_center, period_year=year)
+                )
     return out
 
 

@@ -20,7 +20,7 @@ em PDFs heterogêneos, com plano de contas em mutação durante a transição
 longo do tempo. Este projeto reconstrói uma única **base de dados canônica** a
 partir desses PDFs e a apresenta como site navegável.
 
-Sem assistência de LLMs no caminho de extração: tudo é deterministico,
+Sem assistência de LLMs no caminho de extração: tudo é determinístico,
 reproduzível e auditável.
 
 ## Visão geral do pipeline
@@ -31,19 +31,23 @@ PDFs      texto/      linhas    parquet      build-     HTML
           OCR         brutas    canônico     gating
 ```
 
-| Etapa       | Ferramentas                                      | Saída                                                               |
-|-------------|--------------------------------------------------|---------------------------------------------------------------------|
-| `fetch`     | `httpx` + `tenacity`                             | `data/raw/pdfs/<sha256>.pdf` + `manifest.jsonl`                     |
-| `extract`   | `pymupdf` (texto) + `ocrmypdf`/`tesseract` (OCR) | `data/interim/text/<doc_id>.json` (palavras posicionais por página) |
-| `parse`     | parsers próprios (BP, DRE, DRA, DFC, DVA)        | `data/interim/parsed/<doc_id>.json`                                 |
-| `normalize` | mapeamentos YAML → taxonomia canônica            | `data/processed/canonical.parquet`                                  |
-| `verify`    | cross-foots, matrialidade, golden fixtures       | código de saída (build-gating)                                      |
-| `site`      | templates Jinja2 + Plotly                        | `data/site/`                                                        |
+| Etapa       | Ferramentas                                              | Saída                                                                    |
+|-------------|----------------------------------------------------------|--------------------------------------------------------------------------|
+| `fetch`     | `httpx` + `tenacity`                                     | `data/raw/pdfs/<sha256>.pdf` + `manifest.jsonl`                          |
+| `extract`   | `pymupdf` (texto) + `paddleocr`/`opencv` (OCR)           | `data/interim/text/<doc_id>.json` (palavras + confiança por página)      |
+| `parse`     | parsers próprios (BP, DRE, DRA, DFC, DVA)                | `data/interim/parsed/<doc_id>.json`                                      |
+| `normalize` | mapeamentos YAML + fuzzy/OCR fallback (rapidfuzz)        | `data/processed/canonical.parquet`                                       |
+| `verify`    | cross-foots, sinal, DFC↔BP, variação entre reapresentações, materialidade | código de saída (falha a build em caso de erro)            |
+| `quality`   | rollup por safra/doc                                     | `data/processed/quality.json`                                            |
+| `site`      | templates Jinja2 + Plotly + view de qualidade            | `data/site/` (inclui `qualidade/`)                                       |
 
 A escolha entre extração de texto e OCR é **automática**, baseada na densidade
 textual das primeiras páginas de cada PDF. Brochuras escaneadas (tipicamente
-2001–2009) caem em OCR forçado com `unpaper` para limpeza; documentos
-born-digital (2011+) usam extração direta.
+2001–2009) passam por OCR via PaddleOCR (modelo `latin`, com deskew/binarize
+em OpenCV); documentos nativos digitais (2011+) usam extração direta via
+pymupdf. Cada palavra extraída tem um valor de confiança associado (1,0 para
+texto nativo; score do reconhecedor para OCR) que é propagado até a página de
+qualidade.
 
 ## Instruções
 
@@ -58,15 +62,17 @@ python -m http.server -d data/site 8000
 # abrir http://localhost:8000
 ```
 
-Dependências de sistema (necessárias para OCR de PDFs escaneados):
+Na primeira execução de `make extract`, o PaddleOCR baixa cerca de **250 MB
+de pesos do modelo** (cacheados em `~/.paddleocr/`); execuções subsequentes
+são totalmente locais. Não há mais dependência de `tesseract`/`ocrmypdf` no
+caminho padrão — o motor antigo permanece disponível através de
+`make extract --ocr-engine=tesseract` para quem quiser comparar resultados.
+
+Sistema (apenas para o motor antigo, opcional):
 
 ```bash
 sudo apt install tesseract-ocr tesseract-ocr-por ghostscript unpaper
 ```
-
-`unpaper` é fortemente recomendado: é usado pelas flags `--clean` /
-`--clean-final` do `ocrmypdf` para remover ruído em brochuras escaneadas,
-melhorando bastante a fidelidade da extração nos exercícios pré-2010.
 
 ## Estrutura do projeto
 
@@ -77,7 +83,7 @@ src/correios_audit/
   extract/
     router.py            # roteamento por densidade de texto (texto vs OCR)
     text.py              # extrator posicional via pymupdf
-    ocr.py               # wrapper sobre ocrmypdf
+    ocr.py               # interface sobre ocrmypdf
   parse/
     bp.py                # Balanço Patrimonial (lado a lado e coluna única)
     statement.py         # parser genérico (DRE/DRA/DFC/DVA)
@@ -168,7 +174,7 @@ por demonstração. Cada regra tem:
 ```
 
 Os padrões são aplicados sobre a forma **normalizada** do rótulo (minúsculas,
-sem acentos, espaços colapsados). A primeira regra que casa vence.
+sem acentos, espaços colapsados). A primeira regra correspondente prevalece.
 
 **Rótulos não mapeados não são silenciosamente descartados**: vão para
 `data/interim/unmapped/<doc_id>.csv`. Linhas não-mapeadas que excedem **0,5%
@@ -203,30 +209,50 @@ naquele período.
 
 ## Verificação (`make verify`)
 
-São três camadas, todas com efeito de build-gating:
+Cinco camadas, todas bloqueando a build em caso de falha (sem aceitação
+condicional por safra):
 
 1. **Cross-foots** — por período:
    - BP: `Total do Ativo == Total do Passivo + Patrimônio Líquido`.
-   - DRE (sempre): `Receita Líquida + CPV == Lucro Bruto`.
-   - DRE (somente pós-2010): `Resultado antes do IR + Tributos == Resultado
-     Líquido`. A perna fica desligada antes de 2010 porque o fluxo
-     pré-IFRS inclui PLR e reversão de JCP entre essas duas linhas, então a
-     equação IFRS não vale.
-2. **Gate de materialidade** — qualquer linha não-mapeada acima de **0,5% da
-   receita líquida** quebra o build, exceto para documentos cujo limite de
-   extração é conhecido e documentado (brochuras escaneadas pré-2008 e o ITR
-   2023-Q2). Para esses, a violação vira warning em vez de erro.
-3. **Golden fixtures** — `verify/golden/<year>.csv` contém figuras conferidas
+   - DRE: `Receita Líquida + CPV == Lucro Bruto`.
+   - DRE: `Resultado antes do IR + Tributos + PLR + reversão de JCP ==
+     Resultado Líquido`. As pernas pré-IFRS (PLR e reversão de JCP) são
+     incluídas automaticamente quando os valores existem para aquela
+     vintage.
+   - **DFC ↔ BP cash recon**: `dfc.caixa_fim == bp.ativo.circulante.caixa_equivalentes`,
+     tolerância 0,5% do caixa.
+2. **Convenção de sinal** — toda linha cuja taxonomia declara `sign='+'` ou
+   `sign='-'` deve casar. CPV positivo no canônico = falha. Linhas
+   `sign='any'` são ignoradas.
+3. **Variação entre reapresentações** — para `(line_id, period_year)`
+   reportado em ≥2 safras, falha quando `|último − primeiro| / |primeiro| > 1%`.
+   Reapresentações legítimas devem ser registradas em
+   `data/manual_overrides/restatements_allowed.yaml` com o campo `reason:`
+   justificando o caso.
+4. **Gate de materialidade** — qualquer linha não-mapeada acima de **0,5% da
+   receita líquida** quebra o build, sem exceção. Brochuras escaneadas
+   pré-2010 e o ITR 2023-Q2 devem cobrir suas figuras-headline via
+   `data/manual_overrides/<year>.yaml`.
+5. **Golden fixtures** — `verify/golden/<year>.csv` contém figuras conferidas
    à mão por vintage. Hoje há fixtures para **2014, 2019, 2021 e 2024**
    (cobrindo a transição BR-GAAP → IFRS, o pós-IFRS estável, o pico
    COVID-19/e-commerce e o exercício mais recente). A tolerância de cada
    linha é 0,5% do valor esperado, com mínimo de R$ 1.000.
 
+## Qualidade dos dados (`make quality` + view no site)
+
+`make quality` produz `data/processed/quality.json` com, por documento:
+método de extração, confiança OCR média, contagens de linhas
+canônicas/fuzzy/não-mapeadas, cross-foots BP/DRE em R$, e violações de
+sinal. O site renderiza isso em `qualidade/index.html` (resumo por safra) e
+`qualidade/<vintage>.html` (detalhe por documento, com citações verbatim
+para cada figura de override manual).
+
 ## Limitações conhecidas
 
-- **DMPL** (Demonstração das Mutações do Patrimônio Líquido): rollforward de
-  patrimônio multi-coluna; adiado — a estrutura publicada é eventos × componentes
-  do PL, e exige um parser próprio.
+- **DMPL** (Demonstração das Mutações do Patrimônio Líquido): movimentação
+  multi-coluna do patrimônio; adiada — a estrutura publicada é
+  eventos × componentes do PL e exige um parser próprio.
 - **Tie-out do parecer dos auditores**: o verificador suporta isso
   conceitualmente, mas ainda não há regras que extraiam valores cabeçalho do
   texto narrativo do parecer.
@@ -239,15 +265,16 @@ São três camadas, todas com efeito de build-gating:
 - **Completude de OCR pré-2008** (brochuras 2001–2009): parte das linhas se
   perde por erros de reconhecimento de caracteres (`Móveis` → `Mózeis`,
   `Outros` → `Qutros`, `Investimento` → `i ti t`). O gate de materialidade
-  rebaixa esses casos a warnings; para os documentos afetados, preencha
-  `data/manual_overrides/<year>.yaml` com figuras digitadas à mão a partir
+  rebaixa esses casos a avisos; para os documentos afetados, preencha
+  `data/manual_overrides/<year>.yaml` com valores digitados à mão a partir
   do parecer dos auditores quando precisar de cobertura completa.
 - **ITR 2023-Q2**: o PDF-fonte tem OCR com espaçamentos artificiais
-  (`Propriedades para i ti t`); também rebaixado a warning.
-- **Cobertura DRE pré-2017 incompleta**: BP, DVA e DFC têm cobertura razoável
-  desde 2008, mas a DRE foi extraída integralmente apenas para 2014 e
-  2018 em diante. As DREs intermediárias dependem de melhorias adicionais no
-  parser para layouts antigos.
+  (`Propriedades para i ti t`); também rebaixado a aviso.
+- **Cobertura DRE intermediária**: BP, DVA e DFC têm cobertura razoável
+  desde 2008, mas a DRE só foi extraída integralmente em 2014 e a partir de
+  2018. As demais safras dependem de melhorias no parser para os layouts
+  antigos; até lá, as figuras-chave são preenchidas via
+  `data/manual_overrides/<ano>.yaml` (com citação verbatim do PDF).
 
 ## Sobrescritas manuais (`data/manual_overrides/`)
 

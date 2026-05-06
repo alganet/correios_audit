@@ -1,0 +1,43 @@
+source: "Demonstrações Financeiras de 2006"
+url: "https://www.correios.com.br/acesso-a-informacao/institucional/publicacoes/demonstracoes-financeiras/2006/demonstracoes-financeiras-de-2006"
+sha256: "7f998ef7fe8b50be78cc6290d5d0f0f3d163b596b79cac5dc52c457d36485dc5"
+vintage_year: 2006
+currency_unit: units
+page: 1
+notes: |
+  Brochure layout — headlines hand-keyed from the source PDF.
+
+materiality_satisfied_by_overrides: true
+doc_id: 2006-fy-df
+
+rows:
+  - line_id: bp.ativo.total
+    period_year: 2006
+    period_kind: fy
+    value: 5729285633.23
+    source_page: 1
+    source_quote: "T O T A L  5.729.285.633,23  5.461.043.888,92"
+  - line_id: bp.passivo.total
+    period_year: 2006
+    period_kind: fy
+    value: 5729285633.23
+    source_page: 1
+    source_quote: "T O T A L  5.729.285.633,23  5.461.043.888,92"
+  - line_id: dre.receita_liquida
+    period_year: 2006
+    period_kind: fy
+    value: 8493388931.41
+    source_page: 2
+    source_quote: "RECEITA OPERACIONAL LÍQUIDA  8.493.388.931,41  7.604.582.742,63"
+  - line_id: dre.cpv
+    period_year: 2006
+    period_kind: fy
+    value: -6231827867.91
+    source_page: 2
+    source_quote: "CUSTOS DOS SERVIÇOS  (6.231.827.867,91)  (5.652.866.100,49)"
+  - line_id: dre.resultado_liquido
+    period_year: 2006
+    period_kind: fy
+    value: 328585114.31
+    source_page: 2
+    source_quote: "LUCRO LÍQUIDO DO EXERCÍCIO  328.585.114,31  396.387.339,41"

@@ -3,11 +3,11 @@
 <h1>Auditoria das demonstrações financeiras dos Correios</h1>
 
 <p class="lede">
-  Visão consolidada das finanças da Empresa Brasileira de Correios e Telégrafos
-  (ECT) construída a partir de {{ n_docs }} demonstrações financeiras públicas
-  cobrindo o período {{ year_min }}–{{ year_max }}. Todos os números aqui são
-  retirados diretamente dos PDFs auditados. Cada figura possui um link de volta
-  para a página do PDF onde aparece originalmente.
+  Visão consolidada das finanças da Empresa Brasileira de Correios e
+  Telégrafos (ECT), reconstruída a partir de {{ n_docs }} demonstrações
+  financeiras públicas cobrindo o período {{ year_min }}–{{ year_max }}.
+  Todos os números são extraídos diretamente dos PDFs auditados, e cada um
+  remete à página do PDF de origem.
 </p>
 
 <aside class="coverage">
@@ -63,11 +63,11 @@ Plotly.newPlot({{ chart.id | tojson }}, {{ chart.data | safe }}, {{ chart.layout
 </script>
 
 {% if timeline %}
-<h2>Visão multi-anual (R$ milhões)</h2>
+<h2>Visão plurianual (R$ milhões)</h2>
 <p class="muted">
-  Linhas em branco (—) indicam que aquela linha não foi extraída para o ano.
-  Colunas com borda mais escura indicam transições de regime contábil — passe
-  o mouse para o motivo.
+  Células em branco (—) indicam que aquela linha não foi extraída para o
+  ano. Colunas com borda mais escura sinalizam transições de regime
+  contábil — passe o mouse sobre o cabeçalho para ver o motivo.
 </p>
 <div class="scroll-x">
 <table class="financial">
@@ -110,7 +110,7 @@ Plotly.newPlot({{ chart.id | tojson }}, {{ chart.data | safe }}, {{ chart.layout
 
 <h2>Estado da extração</h2>
 <table class="status">
-  <thead><tr><th>Documento</th><th>Linhas canonizadas</th><th>Origem</th></tr></thead>
+  <thead><tr><th>Documento</th><th>Linhas canônicas</th><th>Origem</th></tr></thead>
   <tbody>
   {% for doc in docs %}
     <tr>
